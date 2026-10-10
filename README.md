@@ -2,8 +2,12 @@
 
 Every call to the studio is answered within a few seconds, at any hour, by a voice agent. The agent qualifies the caller against Nikhil's five gates and books qualified callers into a consultation. Within seconds of the call ending, the right person gets a complete handoff note by email (Gmail). Every call, outcome and rupee of running cost lands on a dashboard.
 
+**Try it:** https://aangan-call-desk-omega.vercel.app/call is the live voice agent in the browser. Talk to Meher and hang up; the lead reaches Gmail and the dashboard within seconds.
+
 ```
-Caller ──► Vaani voice agent (STT → LLM → TTS, free tier)
+Caller ──► /call in-browser voice agent (browser STT/TTS + Gemini) ─┐
+       └─► or Vaani phone agent (STT → LLM → TTS) ─────────────────┤
+                                                                    ▼
             │  prompt: prompts/vaani_agent_prompt.md
             │  mid-call tools ─► /api/tools/check-availability ─► Cal.com
             │                 └► /api/tools/book-consultation  ─► Cal.com + tool_bookings
@@ -78,7 +82,7 @@ Each call gets a `system_costs` row with tokens, voice minutes and **billed** co
 
 | Layer | Service | Free tier |
 |---|---|---|
-| Voice | Vaani (MESA invite code) | Platform free tier |
+| Voice | Browser speech API + Gemini at `/call` (Vaani optional for a phone number) | Free |
 | LLM | Gemini Flash (Groq fallback) | AI Studio free tier |
 | DB | Supabase | 500 MB Postgres |
 | Calendar | Cal.com | Individual plan |
