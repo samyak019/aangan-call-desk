@@ -68,7 +68,8 @@ export function isAfterHours(d: Date): boolean {
 // says that the caller didn't say first (echoing the caller's own budget is fine).
 // ---------------------------------------------------------------------------
 const PER_SQFT = /\d[\d,]*\s*(?:rs\.?|rupees|₹)?\s*(?:\/|per|a)\s*(?:sq\.?\s*f(?:ee)?t|square\s*f(?:ee|oo)t)/i;
-const AMOUNT = /(?:₹|rs\.?|inr)\s*([\d,.]+)\s*(lakh|lac|lakhs|crore|cr|k)?|([\d,.]+)\s*(lakh|lac|lakhs|crore|cr)\b/gi;
+// A number must start with a digit, and "rs"/"inr" must be whole words ("designers, who" is not a price).
+const AMOUNT = /(?:₹|\b(?:rs\.?|inr)\b)\s*(\d[\d,.]*)\s*(lakh|lac|lakhs|crore|cr|k)?|(\d[\d,.]*)\s*(lakh|lac|lakhs|crore|cr)\b/gi;
 
 function amounts(text: string): Set<string> {
   const out = new Set<string>();

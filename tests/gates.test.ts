@@ -113,3 +113,12 @@ test("Pricing guardrail: the deflection script is clean", () => {
     null,
   );
 });
+
+test("Pricing guardrail: words ending in 'rs' are not rupees (T02 false alarm)", () => {
+  assert.equal(
+    detectPricingLeak([{ speaker: "agent", text: "The best way is a consultation with one of our designers, who can walk you through everything." }]),
+    null,
+  );
+  assert.ok(detectPricingLeak([{ speaker: "agent", text: "It's about Rs. 1,800 per sq ft." }]));
+  assert.ok(detectPricingLeak([{ speaker: "agent", text: "Usually around ₹12 lakh." }]));
+});
