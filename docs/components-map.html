@@ -1,0 +1,262 @@
+<meta charset="utf-8">
+<title>Aangan Components Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one wide swimlane grid (actors x Trigger→Output), with a status ledger underneath. */
+:root {
+  --bg: #f2f3ee; --surface: #ffffff; --surface-2: #f7f8f4; --ink: #14201c; --muted: #5f6b66; --line: #e0e3dc;
+  --lane-head: #12342d; --lane-ink: #eef4f1; --lane-alt: #f8f9f5;
+  --jade: #0e6e5c; --brass: #a9781f; --bad: #c0412b; --good: #1f7a4a; --good-soft: #dcefe3; --off-soft: #eceee9;
+  --c-trig: #6a5acd; --c-in: #3a74c4; --c-ctx: #3f8f4f; --c-proc: #b8861b; --c-ai: #c2457a; --c-out: #c46a2a; --c-human: #7a5a44;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1513; --surface: #151e1b; --surface-2: #1a2420; --ink: #e6ede9; --muted: #93a39c; --line: #26322e;
+    --lane-head: #0b201c; --lane-ink: #dfeae7; --lane-alt: #121a17; --jade: #4fc3a6; --brass: #e2b45a; --bad: #f08a72; --good: #6fd29a; --good-soft: #183526; --off-soft: #1f2825;
+    --c-trig: #9d90f0; --c-in: #6ea4ee; --c-ctx: #6fc07f; --c-proc: #e2b45a; --c-ai: #ec7cab; --c-out: #ef9a5c; --c-human: #c9a184; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1513; --surface: #151e1b; --surface-2: #1a2420; --ink: #e6ede9; --muted: #93a39c; --line: #26322e;
+  --lane-head: #0b201c; --lane-ink: #dfeae7; --lane-alt: #121a17; --jade: #4fc3a6; --brass: #e2b45a; --bad: #f08a72; --good: #6fd29a; --good-soft: #183526; --off-soft: #1f2825;
+  --c-trig: #9d90f0; --c-in: #6ea4ee; --c-ctx: #6fc07f; --c-proc: #e2b45a; --c-ai: #ec7cab; --c-out: #ef9a5c; --c-human: #c9a184; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
+.page { max-width: 1320px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 64px; display: flex; flex-direction: column; gap: 22px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.02em; }
+h2 { font-size: 20px; }
+.eyebrow { font: 500 11px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.lede { color: var(--muted); max-width: 72ch; margin: 0; font-size: 16px; }
+.head { display: flex; flex-direction: column; gap: 8px; }
+.key { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); align-items: center; }
+.key span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; border: 2px solid; display: inline-block; }
+
+/* swimlane grid */
+.scroll { overflow-x: auto; padding-bottom: 8px; }
+.lanes { position: relative; display: grid; grid-template-columns: 150px repeat(6, minmax(168px, 1fr)); min-width: 1180px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.corner, .colh, .rowh { background: var(--lane-head); color: var(--lane-ink); display: flex; flex-direction: column; justify-content: center; padding: 12px; }
+.colh { align-items: center; text-align: center; font: 700 15px var(--display); border-left: 1px solid color-mix(in srgb, var(--lane-ink) 12%, transparent); }
+.colh small { font: 400 10.5px var(--mono); opacity: .75; letter-spacing: 0.04em; }
+.corner { font: 700 13px var(--display); }
+.rowh { align-items: flex-start; font: 700 14px/1.2 var(--display); border-top: 1px solid color-mix(in srgb, var(--lane-ink) 12%, transparent); }
+.rowh small { font: 400 11px/1.3 var(--mono); opacity: .75; margin-top: 3px; }
+.lane { grid-column: 2 / 8; border-top: 1px solid var(--line); }
+.lane.alt { background: var(--lane-alt); }
+.cell { display: flex; flex-direction: column; gap: 10px; justify-content: center; padding: 12px 10px; position: relative; z-index: 2; min-width: 0; }
+.box { position: relative; background: var(--surface); border: 1.8px solid; border-radius: 9px; padding: 9px 11px; font-size: 12.8px; line-height: 1.4; }
+.box .n { font: 600 10.5px var(--mono); display: inline-block; padding: 1px 6px; border-radius: 4px; color: #fff; margin-right: 5px; vertical-align: 1px; }
+.box b { font-weight: 600; }
+.box .tool { display: block; margin-top: 5px; font: 11px var(--mono); color: var(--muted); }
+.trig { border-color: var(--c-trig); } .trig .n { background: var(--c-trig); }
+.in { border-color: var(--c-in); } .in .n { background: var(--c-in); }
+.ctx { border-color: var(--c-ctx); } .ctx .n { background: var(--c-ctx); }
+.proc { border-color: var(--c-proc); } .proc .n { background: var(--c-proc); }
+.ai { border-color: var(--c-ai); } .ai .n { background: var(--c-ai); }
+.out { border-color: var(--c-out); } .out .n { background: var(--c-out); }
+.human { border-color: var(--c-human); } .human .n { background: var(--c-human); }
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.wires path { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-dasharray: 5 4; }
+.wires .head { fill: var(--muted); stroke: none; }
+
+/* ledger */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th { text-align: left; font: 500 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 6px 8px 8px 0; border-bottom: 1px solid var(--line); }
+td { padding: 9px 8px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+.st { font: 500 11.5px var(--mono); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.st.live { background: var(--good-soft); color: var(--good); }
+.st.off { background: var(--off-soft); color: var(--muted); }
+.tw { overflow-x: auto; }
+ul.tight { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+code { font: 12.5px var(--mono); }
+.foot { color: var(--muted); font-size: 12.5px; }
+@media (max-width: 600px) { .page { padding-inline: 16px; } }
+</style>
+
+<div class="page">
+  <div class="head">
+    <span class="eyebrow">MESA Case 03 · Aangan Studio · as deployed on 10 Oct 2026</span>
+    <h1>Components map: one call, ring to handoff</h1>
+    <p class="lede">Rows are the actors, columns are the stages. Follow the numbers. Step 2a/4a/5a is a phone call through Vaani; 2b/4b/5b is the same conversation on the website. Both paths meet at step 6 and run identical rules from there.</p>
+    <div class="key">
+      <span><i class="sw" style="border-color:var(--c-trig)"></i>Trigger</span>
+      <span><i class="sw" style="border-color:var(--c-in)"></i>Input</span>
+      <span><i class="sw" style="border-color:var(--c-ctx)"></i>Context</span>
+      <span><i class="sw" style="border-color:var(--c-proc)"></i>Processing (code)</span>
+      <span><i class="sw" style="border-color:var(--c-ai)"></i>AI</span>
+      <span><i class="sw" style="border-color:var(--c-out)"></i>Output</span>
+      <span><i class="sw" style="border-color:var(--c-human)"></i>Human</span>
+    </div>
+  </div>
+
+  <div class="scroll" tabindex="0" aria-label="Components map, scrolls sideways">
+    <div class="lanes" id="lanes">
+      <div class="corner" style="grid-row:1;grid-column:1">Actor</div>
+      <div class="colh" style="grid-row:1;grid-column:2">Trigger<small>what starts it</small></div>
+      <div class="colh" style="grid-row:1;grid-column:3">Input<small>what comes in</small></div>
+      <div class="colh" style="grid-row:1;grid-column:4">Context<small>what it knows</small></div>
+      <div class="colh" style="grid-row:1;grid-column:5">Processing<small>rules in code</small></div>
+      <div class="colh" style="grid-row:1;grid-column:6">AI<small>where a model works</small></div>
+      <div class="colh" style="grid-row:1;grid-column:7">Output<small>what leaves</small></div>
+
+      <div class="rowh" style="grid-row:2;grid-column:1">Caller<small>prospect, any hour</small></div>
+      <div class="rowh" style="grid-row:3;grid-column:1">Vaani<small>phone voice agent</small></div>
+      <div class="rowh" style="grid-row:4;grid-column:1">Website /call<small>browser voice agent</small></div>
+      <div class="rowh" style="grid-row:5;grid-column:1">Meher's brief<small>prompt + lib/rules.ts</small></div>
+      <div class="rowh" style="grid-row:6;grid-column:1">Gemini<small>gemini-3.6-flash</small></div>
+      <div class="rowh" style="grid-row:7;grid-column:1">Our server<small>Next.js on Vercel</small></div>
+      <div class="rowh" style="grid-row:8;grid-column:1">Supabase<small>Postgres</small></div>
+      <div class="rowh" style="grid-row:9;grid-column:1">Gmail<small>SMTP, app password</small></div>
+      <div class="rowh" style="grid-row:10;grid-column:1">People<small>designers · Nikhil · desk</small></div>
+
+      <div class="lane" style="grid-row:2"></div><div class="lane alt" style="grid-row:3"></div>
+      <div class="lane" style="grid-row:4"></div><div class="lane alt" style="grid-row:5"></div>
+      <div class="lane" style="grid-row:6"></div><div class="lane alt" style="grid-row:7"></div>
+      <div class="lane" style="grid-row:8"></div><div class="lane alt" style="grid-row:9"></div>
+      <div class="lane" style="grid-row:10"></div>
+
+      <!-- Trigger -->
+      <div class="cell" style="grid-row:2;grid-column:2">
+        <div class="box trig" id="b1"><span class="n">1</span><b>Calls Aangan</b>, day or night: rings the Vaani line, or taps <b>Call</b> on the website.</div>
+      </div>
+      <!-- Input -->
+      <div class="cell" style="grid-row:3;grid-column:3">
+        <div class="box in" id="b2a"><span class="n">2a</span>Picks up in seconds; <b>speech-to-text</b> on the caller's voice.<span class="tool">Vaani agent "Aangan Studio - Meher"</span></div>
+      </div>
+      <div class="cell" style="grid-row:4;grid-column:3">
+        <div class="box in" id="b2b"><span class="n">2b</span><b>Tap to talk</b>; the browser turns speech into text. Typing also works.<span class="tool">Web Speech API · /call</span></div>
+      </div>
+      <!-- Context -->
+      <div class="cell" style="grid-row:5;grid-column:4">
+        <div class="box ctx" id="b3"><span class="n">3</span>The five things to learn, Pune/PCMC area list, 6-week minimum, out-of-scope list, the exact <b>pricing</b> and <b>decline</b> lines. No price figures.<span class="tool">services.md · qualified.md · pricing.md</span></div>
+      </div>
+      <div class="cell" style="grid-row:8;grid-column:4">
+        <div class="box ctx" id="b6c"><span class="n">6</span><b>Caller history</b>: earlier calls from the same number (repeat caller, dropped-and-redialled).<span class="tool">calls table</span></div>
+      </div>
+      <!-- AI (live) -->
+      <div class="cell" style="grid-row:3;grid-column:6">
+        <div class="box ai" id="b4a"><span class="n">4a</span><b>Meher talks</b>: one question at a time; price asked → deflection line; fits → offers a consultation; doesn't fit → polite close.<span class="tool">Vaani LLM · voice "Palak" (Cartesia Sonic)</span></div>
+      </div>
+      <div class="cell" style="grid-row:6;grid-column:6">
+        <div class="box ai" id="b4b"><span class="n">4b</span><b>Replies as Meher</b> in ~1.5 s. The server swaps any ₹ figure for the deflection line.<span class="tool">thinking: minimal · /api/agent/turn</span></div>
+        <div class="box ai" id="b7"><span class="n">7</span><b>Extracts 31 facts</b> as strict JSON: scope, area, timeline, size, volunteered budget, decision-maker, mood. <b>Never decides.</b><span class="tool">lib/classifier.ts</span></div>
+      </div>
+      <!-- Processing -->
+      <div class="cell" style="grid-row:3;grid-column:5">
+        <div class="box proc" id="b5a"><span class="n">5a</span>Call ends → <b>"Call Post-Processing"</b> webhook POSTs the transcript.<span class="tool">Vaani Developers → Webhooks</span></div>
+      </div>
+      <div class="cell" style="grid-row:4;grid-column:5">
+        <div class="box proc" id="b5b"><span class="n">5b</span>Hang up → transcript sent to the server.<span class="tool">/api/agent/end</span></div>
+      </div>
+      <div class="cell" style="grid-row:7;grid-column:5">
+        <div class="box proc" id="b6"><span class="n">6</span>Checks the webhook secret, ignores retries, links history, <b>scans agent lines for any ₹ figure</b>.<span class="tool">/api/vaani/webhook · lib/pipeline.ts</span></div>
+        <div class="box proc" id="b8"><span class="n">8</span><b>Five gates in code</b> → Qualified · Declined · One question · Escalate · Missed.<span class="tool">lib/gates.ts · 20 tests</span></div>
+      </div>
+      <!-- Output -->
+      <div class="cell" style="grid-row:8;grid-column:7">
+        <div class="box out" id="b9s"><span class="n">9</span><b>Saves</b> the call, lead, gate results and cost; feeds the dashboard.<span class="tool">calls · leads · system_costs</span></div>
+      </div>
+      <div class="cell" style="grid-row:9;grid-column:7">
+        <div class="box out" id="b9g"><span class="n">9</span><b>Emails by outcome</b>: [Aangan Lead] → designers, [URGENT] → Nikhil, [Follow-up]/[Call-back] → front desk.</div>
+      </div>
+      <div class="cell" style="grid-row:10;grid-column:7">
+        <div class="box human" id="b10"><span class="n">10</span>Designer calls back within the hour and <b>gives the price at the consultation</b>. Nikhil reads the dashboard.</div>
+      </div>
+
+      <svg class="wires" id="wires" aria-hidden="true"></svg>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="card">
+      <h2>What each part is, and its status today</h2>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Component</th><th>Status</th><th>Evidence</th></tr></thead>
+          <tbody>
+            <tr><td>Vaani phone agent</td><td><span class="st live">Live</span></td><td>Chat test deflected a price question; two real Vaani calls reached the webhook (one Qualified + emailed).</td></tr>
+            <tr><td>Website voice agent (/call)</td><td><span class="st live">Live</span></td><td>Full scripted call → Qualified + email; tap-to-talk for Safari.</td></tr>
+            <tr><td>Gemini extraction</td><td><span class="st live">Live</span></td><td>21/21 on the September calls, twice.</td></tr>
+            <tr><td>Five gates (code)</td><td><span class="st live">Live</span></td><td>20 automated tests, including pricing-guardrail cases.</td></tr>
+            <tr><td>Supabase database</td><td><span class="st live">Live</span></td><td>September calls plus today's test calls stored.</td></tr>
+            <tr><td>Gmail handoff</td><td><span class="st live">Live</span></td><td>Lead emails received in the school inbox.</td></tr>
+            <tr><td>Dashboard</td><td><span class="st live">Live</span></td><td>aangan-call-desk-omega.vercel.app</td></tr>
+            <tr><td>Cal.com booking</td><td><span class="st off">Not connected</span></td><td>Vaani's Cal.com key didn't save. Meher asks for a preferred time; a designer confirms.</td></tr>
+            <tr><td>HubSpot deals</td><td><span class="st off">Not connected</span></td><td>Code ready; needs a HubSpot token.</td></tr>
+            <tr><td>Groq / Telegram fallbacks</td><td><span class="st off">Not configured</span></td><td>Optional; Gemini and Gmail are the primaries.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Why it's shaped this way</h2>
+      <ul class="tight">
+        <li><b>AI reads, code decides.</b> Gemini only reports what the caller said (step 7). The five gates are plain code (step 8), so a persuasive caller can't talk the model past a rule.</li>
+        <li><b>No price ever leaves the system.</b> Price figures are kept out of Meher's brief (step 3), the website agent's replies are filtered (4b), and every transcript is scanned after the call (6).</li>
+        <li><b>Two front doors, one brain.</b> Phone and website calls meet at step 6 and get identical treatment.</li>
+        <li><b>A person exactly where judgment is needed.</b> Designers own pricing and the consultation; Nikhil owns complaints; the front desk owns call-backs and one-question follow-ups (step 10).</li>
+        <li><b>Gmail, flagged by subject line.</b> Each lead is its own searchable thread; a filter on <code>[Aangan</code> marks them important so the phone notifies.</li>
+      </ul>
+      <p class="foot">Not in scope for this build: WhatsApp and the web form. They would enter at step 6 with the same gates.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var flow = [
+    ["b1","b2a"],["b1","b2b"],["b2a","b4a"],["b2b","b4b"],["b3","b4a"],["b3","b4b"],
+    ["b4a","b5a"],["b4b","b5b"],["b5a","b6"],["b5b","b6"],["b6c","b6"],["b6","b7"],["b7","b8"],
+    ["b8","b9s"],["b8","b9g","side"],["b9g","b10"]
+  ];
+  function edge(r, L) { return { l: r.left - L.left, r: r.right - L.left, t: r.top - L.top, b: r.bottom - L.top, cx: r.left + r.width / 2 - L.left, cy: r.top + r.height / 2 - L.top }; }
+  function arrowHead(x, y, dir) {
+    var s = 6;
+    if (dir === "down") return "M" + (x - 4) + "," + (y - s) + " L" + (x + 4) + "," + (y - s) + " L" + x + "," + y + " Z";
+    if (dir === "up") return "M" + (x - 4) + "," + (y + s) + " L" + (x + 4) + "," + (y + s) + " L" + x + "," + y + " Z";
+    if (dir === "right") return "M" + (x - s) + "," + (y - 4) + " L" + (x - s) + "," + (y + 4) + " L" + x + "," + y + " Z";
+    return "M" + (x + s) + "," + (y - 4) + " L" + (x + s) + "," + (y + 4) + " L" + x + "," + y + " Z";
+  }
+  function draw() {
+    var lanes = document.getElementById("lanes"), svg = document.getElementById("wires");
+    if (!lanes || !svg) return;
+    var L = lanes.getBoundingClientRect(), out = "";
+    svg.setAttribute("viewBox", "0 0 " + L.width + " " + L.height);
+    flow.forEach(function (f) {
+      var A = document.getElementById(f[0]), B = document.getElementById(f[1]);
+      if (!A || !B) return;
+      var a = edge(A.getBoundingClientRect(), L), b = edge(B.getBoundingClientRect(), L), d, head;
+      var sameRow = a.b > b.t && b.b > a.t;
+      if (f[2] === "side") {
+        var sx = b.r + 14;
+        d = "M" + a.r + "," + a.cy + " H" + sx + " V" + b.cy + " H" + (b.r + 6); head = arrowHead(b.r, b.cy, "left");
+      } else if (sameRow) {
+        if (b.l - a.r > 60) { var top = Math.min(a.t, b.t) - 10; d = "M" + a.cx + "," + a.t + " V" + top + " H" + b.cx + " V" + (b.t - 6); head = arrowHead(b.cx, b.t, "down"); }
+        else if (b.l >= a.r) { d = "M" + a.r + "," + a.cy + " H" + (b.l - 6); head = arrowHead(b.l, a.cy, "right"); }
+        else { d = "M" + a.l + "," + a.cy + " H" + (b.r + 6); head = arrowHead(b.r, a.cy, "left"); }
+      } else if (b.t >= a.b) {
+        var my = a.b + Math.min(18, (b.t - a.b) / 2);
+        d = "M" + a.cx + "," + a.b + " V" + my + " H" + b.cx + " V" + (b.t - 6); head = arrowHead(b.cx, b.t, "down");
+      } else {
+        var my2 = b.b + Math.min(18, (a.t - b.b) / 2);
+        d = "M" + a.cx + "," + a.t + " V" + my2 + " H" + b.cx + " V" + (b.b + 6); head = arrowHead(b.cx, b.b, "up");
+      }
+      out += '<path d="' + d + '"/><path class="head" d="' + head + '"/>';
+    });
+    svg.innerHTML = out;
+  }
+  window.addEventListener("resize", draw);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  draw();
+})();
+</script>
