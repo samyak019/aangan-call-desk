@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Turn = { speaker: "agent" | "caller"; text: string };
-type Phase = "idle" | "speaking" | "listening" | "thinking" | "ending" | "done";
+type Phase = "idle" | "speaking" | "waiting" | "recording" | "thinking" | "ending" | "done";
 
 const OUTCOME_COPY: Record<string, string> = {
   QUALIFIED: "Qualified. The lead was emailed to the designers.",
@@ -33,7 +33,7 @@ function getRecognizer(): any | null {
   const r = new SR();
   r.lang = "en-IN";
   r.interimResults = true;
-  r.continuous = false;
+  r.continuous = true;
   r.maxAlternatives = 1;
   return r;
 }
@@ -57,6 +57,7 @@ export default function CallClient() {
   const [typed, setTyped] = useState("");
   const [result, setResult] = useState<{ outcome?: string; notified?: boolean; error?: string } | null>(null);
   const [micOk, setMicOk] = useState(true);
+  const [micMsg, setMicMsg] = useState("");
 
   const turnsRef = useRef<Turn[]>([]);
   const phaseRef = useRef<Phase>("idle");
@@ -102,36 +103,75 @@ export default function CallClient() {
     set("done");
   }, []);
 
+  // Caller's turn: wait for a tap. Safari only lets speech recognition start from a tap,
+  // and not listening while Meher talks stops her own voice being picked up.
   const listen = useCallback(() => {
     if (phaseRef.current === "ending" || phaseRef.current === "done") return;
+    set("waiting");
+  }, []);
+
+  const heardRef = useRef("");
+  const sendOnEndRef = useRef(false);
+
+  const startRecording = () => {
+    window.speechSynthesis?.cancel();
     const rec = getRecognizer();
     if (!rec) {
-      set("listening"); // typing fallback
+      setMicOk(false);
+      setMicMsg("This browser can't turn speech into text. Type your reply below.");
+      set("waiting");
       return;
     }
     recRef.current = rec;
-    let finalText = "";
-    rec.onresult = (e: { resultIndex: number; results: { isFinal: boolean; 0: { transcript: string } }[] }) => {
-      let live = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const r = e.results[i];
-        if (r.isFinal) finalText += r[0].transcript;
-        else live += r[0].transcript;
-      }
-      setInterim(finalText + live);
+    heardRef.current = "";
+    sendOnEndRef.current = true;
+    setMicMsg("");
+    rec.onresult = (e: { results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => {
+      let text = "";
+      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+      heardRef.current = text;
+      setInterim(text);
     };
     rec.onerror = (e: { error: string }) => {
-      if (e.error === "not-allowed" || e.error === "service-not-allowed") setMicOk(false);
+      const msg: Record<string, string> = {
+        "not-allowed": "Microphone is blocked. In Safari: Safari menu → Settings for this website → Microphone → Allow, then reload.",
+        "service-not-allowed": "Speech recognition is switched off on this Mac. Turn on Dictation (System Settings → Keyboard → Dictation), or type your reply below.",
+        "audio-capture": "No microphone found. Type your reply below.",
+        "no-speech": "I didn't hear anything. Tap the mic and speak a little louder.",
+        network: "Speech service couldn't be reached. Type your reply below.",
+      };
+      setMicMsg(msg[e.error] ?? `Microphone problem (${e.error}). Type your reply below.`);
+      if (e.error === "not-allowed" || e.error === "service-not-allowed" || e.error === "audio-capture") setMicOk(false);
     };
     rec.onend = () => {
+      const text = heardRef.current.trim();
       setInterim("");
-      if (phaseRef.current !== "listening") return;
-      if (finalText.trim()) void send(finalText.trim());
-      else listen(); // silence: keep listening
+      if (phaseRef.current !== "recording") return;
+      if (sendOnEndRef.current && text) void send(text);
+      else set("waiting");
     };
-    set("listening");
-    try { rec.start(); } catch {}
-  }, []);
+    set("recording");
+    try {
+      rec.start();
+    } catch {
+      setMicMsg("Couldn't start the microphone. Tap again, or type your reply below.");
+      set("waiting");
+    }
+  };
+
+  const stopRecording = () => {
+    sendOnEndRef.current = true;
+    try { recRef.current?.stop(); } catch {}
+    // Safari can be slow to fire onend; send what we heard after a short wait.
+    setTimeout(() => {
+      if (phaseRef.current === "recording") {
+        const text = heardRef.current.trim();
+        setInterim("");
+        if (text) void send(text);
+        else { setMicMsg("I didn't catch that. Tap the mic and try again, or type below."); set("waiting"); }
+      }
+    }, 1200);
+  };
 
   const speak = useCallback(
     (text: string, then: () => void) => {
@@ -201,8 +241,9 @@ export default function CallClient() {
   const live = phase !== "idle" && phase !== "done";
   const status: Record<Phase, string> = {
     idle: "Ready",
-    speaking: "Meher is speaking…",
-    listening: micOk ? "Listening… speak now" : "Type your reply below",
+    speaking: "Meher is speaking… (tap the mic to interrupt)",
+    waiting: micOk ? "Your turn. Tap the mic and speak." : "Your turn. Type your reply below.",
+    recording: "Listening… tap the mic again when you've finished",
     thinking: "Meher is thinking…",
     ending: "Wrapping up the call…",
     done: "Call ended",
@@ -239,8 +280,20 @@ export default function CallClient() {
 
       {live && (
         <div className="call-controls">
+          {micOk && (
+            <button
+              className={`mic ${phase === "recording" ? "on" : ""}`}
+              onClick={phase === "recording" ? stopRecording : startRecording}
+              disabled={phase === "thinking" || phase === "ending"}
+              aria-label={phase === "recording" ? "Stop and send" : "Tap to speak"}
+            >
+              <span className="mic-icon" aria-hidden="true">🎙</span>
+              {phase === "recording" ? "Tap to send" : "Tap to speak"}
+            </button>
+          )}
+          {micMsg && <p className="mic-msg" role="alert">{micMsg}</p>}
           <form onSubmit={submitTyped} className="typed">
-            <input id="typed" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={micOk ? "Or type here…" : "Type your reply…"} disabled={phase === "thinking" || phase === "ending"} />
+            <input id="typed" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Or type your reply…" disabled={phase === "thinking" || phase === "ending"} />
             <button className="btn" type="submit" disabled={phase === "thinking" || phase === "ending"}>Send</button>
           </form>
           <button className="btn hang" onClick={() => void finish()} disabled={phase === "ending"}>Hang up</button>

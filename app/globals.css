@@ -115,3 +115,11 @@ td small { color: var(--muted); }
 .result { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 14px; }
 .result-main { font-weight: 600; margin: 0; }
 .result a { color: var(--accent); }
+
+.mic { flex: 1 1 100%; display: flex; align-items: center; justify-content: center; gap: 10px; font: inherit; font-size: 17px; font-weight: 700; padding: 18px; border-radius: 14px; border: 2px solid var(--good); background: color-mix(in srgb, var(--good) 14%, var(--card)); color: var(--ink); cursor: pointer; }
+.mic.on { background: var(--warn); border-color: var(--warn); color: #fff; animation: pulse 1.2s ease-in-out infinite; }
+.mic:disabled { opacity: .5; cursor: default; }
+.mic-icon { font-size: 22px; }
+.mic-msg { flex: 1 1 100%; margin: 0; font-size: 13px; color: var(--warn); }
+.orb.waiting { background: var(--good); }
+.orb.recording { background: var(--warn); animation: pulse 1s ease-in-out infinite; }
