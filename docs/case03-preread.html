@@ -1,0 +1,374 @@
+<title>Aangan Enquiry Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column (case pre-read) that widens only for the journey strip and the components grid. */
+:root {
+  --bg: #f4f5f1;
+  --surface: #ffffff;
+  --fg: #1c2321;
+  --muted: #5f6a66;
+  --line: #dde1da;
+  --accent: #1d6b66;     /* deep teal: the system's path */
+  --accent-soft: #dcebe8;
+  --warn: #9a6a12;       /* ochre: friction in today's journey */
+  --warn-soft: #f4ead3;
+  --bad: #a3402c;
+  --bad-soft: #f5e1dc;
+  --good: #2e6e43;
+  --good-soft: #dfeee3;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131816; --surface: #1b211f; --fg: #e7ece9; --muted: #9aa6a1; --line: #2c3431;
+    --accent: #6cc3ba; --accent-soft: #1f3532; --warn: #e0b45c; --warn-soft: #3a311d;
+    --bad: #ec8f7b; --bad-soft: #3d2420; --good: #86cf9c; --good-soft: #1e3324; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131816; --surface: #1b211f; --fg: #e7ece9; --muted: #9aa6a1; --line: #2c3431;
+  --accent: #6cc3ba; --accent-soft: #1f3532; --warn: #e0b45c; --warn-soft: #3a311d;
+  --bad: #ec8f7b; --bad-soft: #3d2420; --good: #86cf9c; --good-soft: #1e3324; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 17px/1.6 var(--body); }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; }
+.col { max-width: 720px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(32px, 5vw, 48px); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 18px; font-weight: 700; }
+p { margin: 0; }
+a { color: var(--accent); }
+.eyebrow { font: 500 12px/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 20px; color: var(--muted); }
+.stack { display: flex; flex-direction: column; gap: 14px; }
+header.top { display: flex; flex-direction: column; gap: 16px; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+.links { display: flex; flex-wrap: wrap; gap: 8px 20px; font: 14px var(--mono); }
+nav.toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+nav.toc a { font: 500 13px var(--display); text-decoration: none; color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; background: var(--surface); }
+nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+section { padding-top: 56px; display: flex; flex-direction: column; gap: 22px; }
+section > .eyebrow { margin-bottom: -12px; }
+
+.why { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.why > div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.why h3 { font-size: 13px; font-family: var(--mono); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.why p { font-size: 16px; }
+
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0; border-block: 1px solid var(--line); }
+.figs > div { padding: 14px 16px 14px 0; display: flex; flex-direction: column; gap: 2px; }
+.figs b { font: 700 30px var(--display); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.figs span { font-size: 14px; color: var(--muted); line-height: 1.35; }
+
+.journey { overflow-x: auto; padding-bottom: 6px; }
+.journey ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 10px; min-width: 940px; }
+.journey li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 14.5px; line-height: 1.45; }
+.journey li .step { font: 500 11px var(--mono); color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+.journey li strong { font-family: var(--display); font-size: 15px; }
+.leak { background: var(--warn-soft); color: var(--fg); border-radius: 6px; padding: 8px 10px; font-size: 13.5px; }
+.leak b { color: var(--warn); font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
+
+.checks { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.check { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 6px 16px; padding: 18px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.check .n { font: 500 14px var(--mono); color: var(--muted); padding-top: 3px; }
+.check h3 { font-size: 17px; }
+.check .ev { grid-column: 2 / 4; font-size: 15.5px; color: var(--fg); }
+.check .ev em { color: var(--muted); }
+.check .so { grid-column: 2 / 4; font-size: 15px; color: var(--muted); }
+.check .so b { color: var(--fg); font-weight: 600; }
+.pill { font: 500 12px var(--mono); padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.pass { background: var(--good-soft); color: var(--good); }
+.cond { background: var(--warn-soft); color: var(--warn); }
+.stop { background: var(--bad-soft); color: var(--bad); }
+
+.cut { background: var(--surface); border: 1px solid var(--bad); border-radius: 12px; padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+.cut h3 { color: var(--bad); font-size: 20px; }
+blockquote { margin: 0; padding-left: 14px; border-left: 3px solid var(--line); color: var(--muted); font-style: italic; }
+
+.cmap { overflow-x: auto; }
+.cmap table { border-collapse: separate; border-spacing: 6px; min-width: 980px; width: 100%; font-size: 14px; line-height: 1.45; }
+.cmap th { font: 700 14px var(--display); text-align: left; padding: 10px 12px; background: var(--accent); color: var(--bg); border-radius: 8px; }
+.cmap th small { display: block; font: 400 11px var(--mono); opacity: 0.85; letter-spacing: 0.04em; }
+.cmap th.row { background: transparent; color: var(--muted); font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: 0.06em; width: 92px; vertical-align: top; padding-top: 14px; }
+.cmap td { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; vertical-align: top; }
+.cmap td.tool { font-family: var(--mono); font-size: 12.5px; background: var(--accent-soft); border-color: transparent; }
+.cmap td.ex { font-style: italic; color: var(--muted); }
+
+.routes { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.route { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 6px; font-size: 14.5px; min-width: 0; }
+.route .who { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.route h3 { font-size: 16px; }
+.route code { font: 12px var(--mono); color: var(--accent); }
+
+table.plain { border-collapse: collapse; width: 100%; font-size: 15px; }
+table.plain th, table.plain td { text-align: left; padding: 9px 10px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.plain th { font: 500 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+table.plain td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+pre.note { font: 13px/1.55 var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; margin: 0; white-space: pre; }
+ul.tight { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  .check { grid-template-columns: 28px minmax(0, 1fr); }
+  .check .pill { grid-column: 2; justify-self: start; }
+  .check .ev, .check .so { grid-column: 2; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top col">
+    <span class="eyebrow">MESA · Founder's Office · Case 03 pre-read · Samyak Shrimal</span>
+    <h1>Every call answered. The good ones on a designer's desk in five minutes.</h1>
+    <p class="lede">Aangan Studio, Pune. An inbound phone agent that answers 24/7, qualifies against Nikhil's own five criteria, books the consultation, and hands the designer a complete note.</p>
+    <div class="links">
+      <a href="https://aangan-call-desk-omega.vercel.app" target="_blank" rel="noopener">Live dashboard ↗</a>
+      <a href="https://github.com/samyak019/aangan-call-desk" target="_blank" rel="noopener">Code ↗</a>
+    </div>
+    <nav class="toc" aria-label="Sections">
+      <a href="#brief">1 · Automation brief</a>
+      <a href="#checks">2 · Nine checks &amp; the Cut</a>
+      <a href="#components">3 · Components map</a>
+      <a href="#handoff">Gmail handoff</a>
+      <a href="#proof">Proof &amp; cost</a>
+    </nav>
+  </header>
+
+  <!-- 1 -->
+  <section id="brief">
+    <span class="eyebrow">Deliverable 1</span>
+    <h2>Automation brief</h2>
+
+    <div class="figs">
+      <div><b>~200</b><span>enquiries a month</span></div>
+      <div><b>48%</b><span>get no reply within 48 hours</span></div>
+      <div><b>4×</b><span>conversion when answered inside 1 hour vs next day</span></div>
+      <div><b>33%</b><span>arrive outside 10am–7pm</span></div>
+      <div><b>₹8–14 L</b><span>average project value</span></div>
+    </div>
+
+    <div class="why">
+      <div>
+        <h3>Pain</h3>
+        <p>About 96 enquiries a month wait two days or more, and that wait cuts conversion by up to four times. A third land when nobody is at the desk. The ones that do reach a designer arrive as a bare forwarded message, so the first call repeats questions the front desk already asked.</p>
+      </div>
+      <div>
+        <h3>User</h3>
+        <p><b>The designer</b> who receives the lead, and <b>the caller</b> who wants an answer tonight, not tomorrow. Nikhil is the owner and buyer, and the front desk (two people, 10–7) is relieved of the repetitive part.</p>
+      </div>
+      <div>
+        <h3>Outcome</h3>
+        <p>Every call is answered in seconds, day or night. Qualified leads reach a designer within <b>5 minutes</b> of the call ending, with all five criteria already answered. Nikhil sees volume, conversion, response time and running cost without pulling numbers by hand.</p>
+      </div>
+    </div>
+
+    <div class="col stack">
+      <h3>The journey today (phone)</h3>
+      <p>Traced from the 20 September phone calls. The ochre boxes are where enquiries leak.</p>
+    </div>
+    <div class="journey" tabindex="0" aria-label="Today's phone journey, scrolls sideways">
+      <ol>
+        <li><span class="step">1 · Ring</span><strong>Caller dials the studio</strong>Found via Instagram, a referral or LinkedIn.
+          <div class="leak"><b>Leak</b>After 7pm nobody answers. T08 rang at 10:47pm, left no voicemail, and the 10:15am call-back went unanswered.</div></li>
+        <li><span class="step">2 · Pick-up</span><strong>Front desk answers (10–7)</strong>Two people share the phone, WhatsApp and the web form.
+          <div class="leak"><b>Leak</b>Dropped lines rely on the caller trying again (T17).</div></li>
+        <li><span class="step">3 · Questions</span><strong>Same five questions, by memory</strong>Scope, area, timeline, size, who decides.
+          <div class="leak"><b>Leak</b>Inconsistent: T11, T13 and T14 never asked the timeline.</div></li>
+        <li><span class="step">4 · Price</span><strong>"Can you give me a ballpark?"</strong>The desk deflects and the caller usually still books (T02, T13).</li>
+        <li><span class="step">5 · Hand-off</span><strong>Note forwarded to a designer</strong>A message with no context.
+          <div class="leak"><b>Leak</b>T16: "Someone said they'd get back to me. It's been two days." The note was never logged.</div></li>
+        <li><span class="step">6 · Designer</span><strong>Designer calls back</strong>Re-asks everything, then books the consultation.
+          <div class="leak"><b>Leak</b>A day or more has passed, so the 4× window is gone.</div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="checks">
+    <span class="eyebrow">Deliverable 2</span>
+    <h2>Nine checks</h2>
+    <p class="col">Each check is tested against evidence from the case. Eight pass, some with conditions on how the build works. One stops a feature.</p>
+
+    <div class="checks">
+      <div class="check">
+        <span class="n">01</span><h3>Is the pain real and measured?</h3><span class="pill pass">Pass</span>
+        <p class="ev">Nikhil pulled the numbers himself: 48% unanswered in 48 hours, a 4× conversion gap, 33% after hours. The transcripts show it happening: T08 missed at night, T16 lost in a hand-off, W05 lost over a weekend.</p>
+      </div>
+      <div class="check">
+        <span class="n">02</span><h3>Is there enough volume, and does it repeat?</h3><span class="pill pass">Pass</span>
+        <p class="ev">About 200 enquiries a month, roughly 7 a day, and the brief names the phone as the channel with the most volume and urgency. Every qualifying call follows the same five-question script.</p>
+      </div>
+      <div class="check">
+        <span class="n">03</span><h3>Is the input available to a machine?</h3><span class="pill pass">Pass</span>
+        <p class="ev">A voice platform (Vaani) produces a live transcript. Callers volunteer the facts in plain speech: <em>"3BHK in Kothrud, about 1,400 sq ft carpet, done by March."</em></p>
+      </div>
+      <div class="check">
+        <span class="n">04</span><h3>Are the rules written down?</h3><span class="pill pass">Pass</span>
+        <p class="ev"><code>qualified.md</code> sets out five criteria and what to do at each boundary. <code>services.md</code> lists the service-area localities and the 6-week minimum lead time. <code>pricing.md</code> gives the exact deflection sentence.</p>
+        <p class="so"><b>So:</b> the rules live in code (<code>lib/gates.ts</code>), not in the prompt. The model reports facts and code makes the decision, so a persuasive caller can't talk the model past a rule.</p>
+      </div>
+      <div class="check">
+        <span class="n">05</span><h3>Can we test it against the real answer?</h3><span class="pill pass">Pass</span>
+        <p class="ev">The 20 September calls come with what the front desk actually decided. Replayed through the system they score <b>21/21</b> (T17 counts as two calls), and 18 offline tests cover each gate.</p>
+      </div>
+      <div class="check">
+        <span class="n">06</span><h3>What does a wrong answer cost?</h3><span class="pill cond">Pass, with a rule</span>
+        <p class="ev">Wrongly declining a lead loses a ₹8–14 L project. Wrongly forwarding one costs a designer about 20 minutes. The two errors are not symmetric.</p>
+        <p class="so"><b>So:</b> the system declines only on a <i>clear</i> failure. Unclear timeline, budget or decision-maker goes forward with a note, and unclear scope or location gets one question (<code>qualified.md</code>: "do not push"). Every decline is logged on the dashboard for review.</p>
+      </div>
+      <div class="check">
+        <span class="n">07</span><h3>Where must a human stay?</h3><span class="pill cond">Pass, with a rule</span>
+        <p class="ev">T09 is an existing client whose designer hasn't replied in five days and who wants Nikhil. An agent cannot fix that. Design advice and the price conversation also belong to the designer.</p>
+        <p class="so"><b>So:</b> complaints are flagged ESCALATE and emailed to Nikhil, and the caller is promised a senior call-back within 15 minutes. The agent qualifies and books, and people do the rest.</p>
+      </div>
+      <div class="check">
+        <span class="n">08</span><h3>Could it say something it must not?</h3><span class="pill stop">Stops a feature</span>
+        <p class="ev"><code>pricing.md</code>: <em>"No number from this guide should be quoted to a client."</em> The guide is marked indicative only, and the spread is large: T13's desk says a premium kitchen can cost three times a standard one.</p>
+        <p class="so"><b>So:</b> the per-sq-ft quote is cut (see below). Pricing numbers are kept out of the agent's prompt, and a post-call guardrail flags any ₹ figure the agent says.</p>
+      </div>
+      <div class="check">
+        <span class="n">09</span><h3>Is it worth running, and can we see the cost?</h3><span class="pill pass">Pass</span>
+        <p class="ev">On free tiers it costs $0.00. At paid list rates it would be about $0.43 per qualified lead (assuming $0.05/min for voice plus Gemini tokens), against a ₹8–14 L project. Nikhil asked to see the tool's own cost, so every call writes a cost row and the dashboard shows billed and paid-rate cost side by side.</p>
+      </div>
+    </div>
+
+    <div class="cut col">
+      <span class="eyebrow">The Cut · stopped by check 08</span>
+      <h3>The agent will not quote "our standard per-square-foot pricing"</h3>
+      <blockquote>"And the system should be able to quote our standard per-square-foot pricing so people don't have to wait for that." — Nikhil (the brief's prompt says Arjun)</blockquote>
+      <p>Nikhil's own pricing guide forbids it, and the guide's range runs from standard to luxury at about twice the price. Any number spoken on a call would be wrong for most callers, and it would anchor the negotiation before a designer has seen the site. The transcripts also show it isn't needed: T02 and T13 both pushed for a ballpark, were deflected, and booked anyway.</p>
+      <p><b>What we build instead</b> serves the real goal, which is that nobody waits for a price. The agent uses the exact deflection line and books the consultation during the call, where the designer gives a real number. The handoff tells the designer "asked about pricing, come ready to talk numbers."</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section id="components">
+    <span class="eyebrow">Deliverable 3</span>
+    <h2>Components map</h2>
+    <p class="col">One phone call from ring to handoff. The bottom row follows T01 (Priya, Kothrud) through each stage.</p>
+
+    <div class="cmap" tabindex="0" aria-label="Components map table, scrolls sideways">
+      <table>
+        <thead>
+          <tr>
+            <th class="row" scope="col"></th>
+            <th scope="col">Trigger<small>what starts it</small></th>
+            <th scope="col">Input<small>what comes in</small></th>
+            <th scope="col">Context<small>what it knows</small></th>
+            <th scope="col">Processing<small>rules in code</small></th>
+            <th scope="col">AI<small>where a model works</small></th>
+            <th scope="col">Output<small>what leaves</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th class="row" scope="row">What</th>
+            <td>Inbound call to the studio number, any hour. When the call ends, the voice platform posts the transcript to our webhook.</td>
+            <td>Live speech and the caller's number. After the call: transcript, duration and start time, plus any slot booked during the call.</td>
+            <td><code>services.md</code> (scope, localities), <code>qualified.md</code> (five gates), the pricing deflection script, the caller's history (repeat or dropped call), the Cal.com calendar.</td>
+            <td>Five gates: scope, geography, timeline (6+ weeks), volunteered budget, decision-maker. Outcome routing, the pricing-leak check, and logging of cost and time.</td>
+            <td><b>Live:</b> the voice agent converses and asks one question at a time.<br><b>After the call:</b> Gemini Flash extracts 30 facts as strict JSON and makes no decisions.</td>
+            <td>Handoff email to the right inbox, a HubSpot deal, a database row and the dashboard. Declined callers get the polite close on the call.</td>
+          </tr>
+          <tr>
+            <th class="row" scope="row">Tool</th>
+            <td class="tool">Vaani voice agent · post-call webhook</td>
+            <td class="tool">/api/vaani/webhook</td>
+            <td class="tool">lib/rules.ts · Supabase history · Cal.com</td>
+            <td class="tool">lib/gates.ts · lib/call.ts</td>
+            <td class="tool">Vaani (STT·LLM·TTS) · Gemini Flash, Groq fallback</td>
+            <td class="tool">Gmail SMTP · HubSpot · Supabase · Vercel dashboard</td>
+          </tr>
+          <tr>
+            <th class="row" scope="row">T01</th>
+            <td class="ex">Wed 2 Sep, 10:23. Priya calls, referred by Shruti Joshi.</td>
+            <td class="ex">"3BHK in Kothrud, 1,400 sq ft carpet, whole flat, done by March, husband's happy to go ahead."</td>
+            <td class="ex">Kothrud is on the service list. No previous calls from this number.</td>
+            <td class="ex">Scope ✓, area ✓, timeline ✓ (about 6 months), budget not mentioned ✓, decision-maker ✓, so QUALIFIED.</td>
+            <td class="ex">Extracted: name, 3BHK, Dahanukar Colony, full home, "by March", co-owner, referral.</td>
+            <td class="ex">"[Aangan Lead] Priya — 3BHK apartment, Kothrud" reaches the designers' inbox about 9 seconds after she hangs up.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col stack">
+      <h3>Where each outcome goes</h3>
+    </div>
+    <div class="routes">
+      <div class="route"><span class="who">→ Designers</span><h3>Qualified</h3><p>Full handoff note, plus a HubSpot deal.</p><code>11 of 21 Sept calls</code></div>
+      <div class="route"><span class="who">→ Front desk</span><h3>Needs one answer</h3><p>Scope or area unclear. The exact question to ask is included.</p><code>0–1 (T16)</code></div>
+      <div class="route"><span class="who">→ Nikhil</span><h3>Escalate</h3><p>Existing-client complaint, or a pricing-guardrail alert.</p><code>1 (T09)</code></div>
+      <div class="route"><span class="who">→ Front desk</span><h3>Missed / dropped</h3><p>Call-back task with the number.</p><code>2 (T08, T17a)</code></div>
+      <div class="route"><span class="who">→ Dashboard only</span><h3>Declined politely</h3><p>Out of area, advice-only, rush, budget, restaurant, too small.</p><code>6</code></div>
+    </div>
+  </section>
+
+  <!-- handoff -->
+  <section id="handoff">
+    <span class="eyebrow">Decision · Telegram or email</span>
+    <h2>Gmail, with a filter that makes it urgent</h2>
+    <div class="col stack">
+      <ul class="tight">
+        <li><b>The studio already runs on email.</b> Client threads, vendor quotes and site photos are there. A lead becomes a thread the designer can reply to, forward or find six months later. In a Telegram group, lead number 40 is buried under the 39 before it.</li>
+        <li><b>Free, with no setup.</b> A Gmail App Password allows about 500 sends a day, against roughly 200 calls a month, and needs no domain or DNS work.</li>
+        <li><b>Urgency comes from the subject line.</b> Every subject starts <code>[Aangan Lead]</code>, <code>[Aangan URGENT]</code>, <code>[Aangan Follow-up]</code> or <code>[Aangan Call-back]</code>. A one-line Gmail filter marks these Important, so the phone notifies for leads only.</li>
+        <li><b>Three audiences:</b> designers, Nikhil and the front desk. Nobody is emailed about a declined call.</li>
+      </ul>
+      <p><b>Trade-off accepted:</b> a Telegram ping arrives a few seconds sooner. The 4× gain is measured against the next day, though, not the next minute. An email flagged Important and read within the hour captures the gain and keeps the lead where the project will be run. Telegram stays wired in as the fallback.</p>
+      <pre class="note">From: Aangan Call Desk
+Subject: [Aangan Lead] Priya — 3BHK apartment, Kothrud
+
+📌 NEW QUALIFIED LEAD HANDOFF
+- Caller Name: Priya
+- Contact Number: +91 98•••••001
+- Location &amp; Property Type: 3BHK apartment, Kothrud — Dahanukar Colony, 1,400 sq ft
+- Scope: Full home (kitchen, living room, bedrooms)
+- Possession &amp; Timeline: done by March, in no rush
+- Budget Mentioned: Unspecified
+- Key Notes &amp; Vibe: Co-owner with husband; husband approved · Came via referral from Shruti Joshi
+- Action Taken: No slot booked on the call — call back within 1 hour</pre>
+    </div>
+  </section>
+
+  <!-- proof -->
+  <section id="proof">
+    <span class="eyebrow">Proof &amp; cost</span>
+    <h2>Replayed on September's 20 phone calls</h2>
+    <div class="tablewrap">
+      <table class="plain">
+        <thead><tr><th>Call</th><th>System decision</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td>T01 T02 T05 T06 T11–T15 T17b T20</td><td>Qualified</td><td>All gates pass. T02 and T13 asked for a price and were deflected. T14 is forwarded with the note "parents decide".</td></tr>
+          <tr><td>T03</td><td>Declined</td><td>Nashik is outside Pune/PCMC</td></tr>
+          <tr><td>T04</td><td>Declined</td><td>Ideas only, no execution</td></tr>
+          <tr><td>T07</td><td>Declined</td><td>Wants it before Diwali, about 3 weeks away</td></tr>
+          <tr><td>T10</td><td>Declined</td><td>Volunteered ₹1–1.5 L for a kitchen and a bedroom</td></tr>
+          <tr><td>T18</td><td>Declined</td><td>180 sq ft pod, below the ~500 sq ft minimum</td></tr>
+          <tr><td>T19</td><td>Declined</td><td>Restaurant</td></tr>
+          <tr><td>T09</td><td>Escalate</td><td>Existing-client complaint</td></tr>
+          <tr><td>T08, T17a</td><td>Missed</td><td>No conversation, so a call-back goes to the front desk</td></tr>
+          <tr><td>T16</td><td>Qualified or follow-up</td><td>Scope never stated. Flagged as a frustrated repeat caller either way.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="figs">
+      <div><b>21/21</b><span>match the studio's own decision (2 runs)</span></div>
+      <div><b>~9 s</b><span>median from call end to handoff sent</span></div>
+      <div><b>$0.00</b><span>billed on free tiers</span></div>
+      <div><b>$0.43</b><span>per qualified lead at paid rates (assumed)</span></div>
+      <div><b>0</b><span>₹ figures spoken by the agent</span></div>
+    </div>
+    <div class="col stack">
+      <h3>Extending beyond the phone (not built)</h3>
+      <p>Only the input changes. A WhatsApp thread or a web-form post becomes the same transcript object and runs through the same gates, handoff and dashboard. The web form already asks most of the five questions, so it would usually go straight to handoff. WhatsApp would run the same flow as text, and fixes W01 and W05, which were lost after hours.</p>
+    </div>
+  </section>
+
+  <footer class="col">Sources: MESA Case 03 brief; <code>services.md</code>, <code>qualified.md</code>, <code>pricing.md</code>; Aangan September 2026 enquiry transcripts (T01–T20). The paid-rate voice cost of $0.05/min is an assumption, set in the app's config.</footer>
+</div>
