@@ -68,6 +68,7 @@ export default async function Dashboard() {
           <h1>Aangan Studio · Call Desk</h1>
           <p className="sub">Last 90 days · every inbound call, answered 24/7 by the voice agent</p>
         </div>
+        <a className="callbtn" href="/call">📞 Call the agent</a>
         {demo && <span className="badge">Demo data · September 2026 transcripts — connect Supabase for live numbers</span>}
       </header>
       {err && <p className="error">Couldn&apos;t load data: {err}</p>}
