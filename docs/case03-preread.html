@@ -18,19 +18,23 @@
   --bad-soft: #f5e1dc;
   --good: #2e6e43;
   --good-soft: #dfeee3;
+  --lane-head: #17322f;
+  --lane-ink: #eef3f1;
+  --lane-rule: #2c4a46;
+  --lane-alt: #f7f8f5;
   --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
   --body: "Source Serif 4", Georgia, "Times New Roman", serif;
   --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #131816; --surface: #1b211f; --fg: #e7ece9; --muted: #9aa6a1; --line: #2c3431;
+    --bg: #131816; --lane-head: #0f2523; --lane-ink: #dfeae7; --lane-rule: #24403c; --lane-alt: #182120; --surface: #1b211f; --fg: #e7ece9; --muted: #9aa6a1; --line: #2c3431;
     --accent: #6cc3ba; --accent-soft: #1f3532; --warn: #e0b45c; --warn-soft: #3a311d;
     --bad: #ec8f7b; --bad-soft: #3d2420; --good: #86cf9c; --good-soft: #1e3324; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #131816; --surface: #1b211f; --fg: #e7ece9; --muted: #9aa6a1; --line: #2c3431;
+  --bg: #131816; --lane-head: #0f2523; --lane-ink: #dfeae7; --lane-rule: #24403c; --lane-alt: #182120; --surface: #1b211f; --fg: #e7ece9; --muted: #9aa6a1; --line: #2c3431;
   --accent: #6cc3ba; --accent-soft: #1f3532; --warn: #e0b45c; --warn-soft: #3a311d;
   --bad: #ec8f7b; --bad-soft: #3d2420; --good: #86cf9c; --good-soft: #1e3324; color-scheme: dark;
 }
@@ -113,6 +117,37 @@ table.plain td.num { font-family: var(--mono); font-variant-numeric: tabular-num
 pre.note { font: 13px/1.55 var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; margin: 0; white-space: pre; }
 ul.tight { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
 footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+
+.group { display: flex; flex-direction: column; gap: 6px; }
+.ghead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 10px 0 2px; }
+.ghead h3 { font-size: 15px; font-family: var(--mono); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+.ghead span { font-size: 15px; color: var(--muted); font-style: italic; }
+.cut p { font-size: 16.5px; }
+
+/* Components map: actor swimlanes x stage columns, as in the course answer key */
+.lanes-scroll { overflow-x: auto; padding-bottom: 6px; }
+.lanes { position: relative; display: grid; grid-template-columns: 150px repeat(6, minmax(140px, 1fr)); grid-template-rows: auto repeat(6, minmax(104px, auto)); min-width: 1040px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.corner, .colh, .rowh { background: var(--lane-head); color: var(--lane-ink); font: 700 14px var(--display); display: flex; flex-direction: column; justify-content: center; padding: 12px; }
+.corner { grid-row: 1; grid-column: 1; }
+.colh { grid-row: 1; justify-content: center; align-items: center; text-align: center; border-left: 1px solid var(--lane-rule); }
+.rowh { grid-column: 1; align-items: center; text-align: center; border-top: 1px solid var(--lane-rule); }
+.rowh small { font: 400 12px var(--mono); opacity: 0.8; margin-top: 2px; }
+.lane { grid-column: 2 / 8; background: var(--surface); border-top: 1px solid var(--line); }
+.lane.alt { background: var(--lane-alt); }
+.box { position: relative; z-index: 2; margin: 12px 10px; padding: 10px 12px 10px 12px; border-radius: 8px; border: 1.5px solid; font-size: 13.5px; line-height: 1.4; align-self: center; background: var(--surface); }
+.box i { font: 500 11px var(--mono); font-style: normal; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: currentColor; margin-right: 6px; vertical-align: 1px; }
+.box i { color: var(--fg); }
+.box i { color: var(--bg); background: var(--fg); }
+.b-trig { border-color: #6a5acd; background: color-mix(in srgb, #6a5acd 12%, var(--surface)); }
+.b-in { border-color: #3a74c4; background: color-mix(in srgb, #3a74c4 12%, var(--surface)); }
+.b-ctx { border-color: #3f8f4f; background: color-mix(in srgb, #3f8f4f 12%, var(--surface)); }
+.b-proc { border-color: #c4931f; background: color-mix(in srgb, #c4931f 14%, var(--surface)); }
+.b-ai { border-color: #c2457a; background: color-mix(in srgb, #c2457a 12%, var(--surface)); }
+.b-out { border-color: #c46a2a; background: color-mix(in srgb, #c46a2a 12%, var(--surface)); }
+.b-human { border-color: #8a5a3c; background: color-mix(in srgb, #8a5a3c 12%, var(--surface)); }
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.wires path { fill: none; stroke: var(--fg); stroke-width: 1.4; stroke-dasharray: 5 4; opacity: 0.7; }
+.wires .head { fill: var(--fg); opacity: 0.8; stroke: none; }
 @media (max-width: 560px) {
   body { font-size: 16px; }
   .check { grid-template-columns: 28px minmax(0, 1fr); }
@@ -191,58 +226,68 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line);
   <!-- 2 -->
   <section id="checks">
     <span class="eyebrow">Deliverable 2</span>
-    <h2>Nine checks</h2>
-    <p class="col">Each check is tested against evidence from the case. Eight pass, some with conditions on how the build works. One stops a feature.</p>
+    <h2>Nine checks: does this deserve to be built?</h2>
+    <p class="col">Each answer uses evidence from the brief, the three studio files and the September transcripts.</p>
 
-    <div class="checks">
-      <div class="check">
-        <span class="n">01</span><h3>Is the pain real and measured?</h3><span class="pill pass">Pass</span>
-        <p class="ev">Nikhil pulled the numbers himself: 48% unanswered in 48 hours, a 4× conversion gap, 33% after hours. The transcripts show it happening: T08 missed at night, T16 lost in a hand-off, W05 lost over a weekend.</p>
+    <div class="group">
+      <div class="ghead"><h3>Kill switches</h3><span>Any No means don't build it.</span></div>
+      <div class="checks">
+        <div class="check">
+          <span class="n">01</span><h3>Problem real?</h3><span class="pill pass">Yes</span>
+          <p class="ev">Nikhil pulled his own numbers: about 48% of roughly 200 enquiries a month get no reply within 48 hours. A third arrive outside 10am–7pm. An answer within an hour converts at 4× the next-day rate. The transcripts show the leaks happening: T08 rang at 10:47pm and nobody answered. T16 was promised a call-back that never came and asked whether that's "a good sign if you forget before you even start". T17's line dropped mid-sentence.</p>
+        </div>
+        <div class="check">
+          <span class="n">02</span><h3>Workflow repeated?</h3><span class="pill pass">Yes</span>
+          <p class="ev">Every phone enquiry runs the same script. The desk asks what the caller wants done, where, when, how big and who decides, then books or declines. Nikhil wrote those five questions down in <code>qualified.md</code>. That's about 7 enquiries a day, every day, including the third that arrive when nobody is at the desk.</p>
+        </div>
+        <div class="check">
+          <span class="n">03</span><h3>Input available?</h3><span class="pill pass">Yes</span>
+          <p class="ev">The caller provides everything by speaking: <em>"3BHK in Kothrud, about 1,400 sq ft carpet, done by March."</em> The voice platform (Vaani) turns the call into a transcript. The rules are already written down: service areas and the 6-week minimum in <code>services.md</code>, the five criteria in <code>qualified.md</code>, and the pricing script in <code>pricing.md</code>. One gap: callers rarely give an email address, so the booking confirmation goes to the studio and the designer uses the phone number.</p>
+        </div>
       </div>
-      <div class="check">
-        <span class="n">02</span><h3>Is there enough volume, and does it repeat?</h3><span class="pill pass">Pass</span>
-        <p class="ev">About 200 enquiries a month, roughly 7 a day, and the brief names the phone as the channel with the most volume and urgency. Every qualifying call follows the same five-question script.</p>
+    </div>
+
+    <div class="group">
+      <div class="ghead"><h3>Sizing</h3><span>Any No means build something smaller.</span></div>
+      <div class="checks">
+        <div class="check">
+          <span class="n">04</span><h3>Output valuable?</h3><span class="pill pass">Yes</span>
+          <p class="ev">This is the second half of Nikhil's ask: the lead should reach a designer "with everything already asked". The handoff note answers all five criteria and adds the referral source, whether they asked about price, and their mood. The designer's first call starts at the design brief, not the questions the front desk already asked. Declined callers get an honest answer on the call, so they aren't left waiting for a call-back.</p>
+        </div>
+        <div class="check">
+          <span class="n">05</span><h3>Impact measurable?</h3><span class="pill pass">Yes</span>
+          <p class="ev">The dashboard tracks the numbers he pulled by hand. Unanswered within 48 hours: from 48% to the share of calls the agent misses. Call end to designer: from a day or more to a target under 5 minutes (about 9 seconds in replay). It also tracks after-hours calls caught, qualified leads, consultations booked, and decline reasons by gate. Replayed on September's calls, the system matches the studio's own decision on 21 of 21.</p>
+        </div>
+        <div class="check">
+          <span class="n">08</span><h3>ROI worth it?</h3><span class="pill pass">Yes</span>
+          <p class="ev">It runs on free tiers (Vaani, Gemini, Supabase, Cal.com, HubSpot, Gmail and Vercel), so the billed cost is $0.00. At paid rates the dashboard estimates about $0.43 per qualified lead, against a ₹8–14 L average project. One extra project converted a year pays for it many times over. The cost is shown on the dashboard, as Nikhil asked.</p>
+        </div>
       </div>
-      <div class="check">
-        <span class="n">03</span><h3>Is the input available to a machine?</h3><span class="pill pass">Pass</span>
-        <p class="ev">A voice platform (Vaani) produces a live transcript. Callers volunteer the facts in plain speech: <em>"3BHK in Kothrud, about 1,400 sq ft carpet, done by March."</em></p>
-      </div>
-      <div class="check">
-        <span class="n">04</span><h3>Are the rules written down?</h3><span class="pill pass">Pass</span>
-        <p class="ev"><code>qualified.md</code> sets out five criteria and what to do at each boundary. <code>services.md</code> lists the service-area localities and the 6-week minimum lead time. <code>pricing.md</code> gives the exact deflection sentence.</p>
-        <p class="so"><b>So:</b> the rules live in code (<code>lib/gates.ts</code>), not in the prompt. The model reports facts and code makes the decision, so a persuasive caller can't talk the model past a rule.</p>
-      </div>
-      <div class="check">
-        <span class="n">05</span><h3>Can we test it against the real answer?</h3><span class="pill pass">Pass</span>
-        <p class="ev">The 20 September calls come with what the front desk actually decided. Replayed through the system they score <b>21/21</b> (T17 counts as two calls), and 18 offline tests cover each gate.</p>
-      </div>
-      <div class="check">
-        <span class="n">06</span><h3>What does a wrong answer cost?</h3><span class="pill cond">Pass, with a rule</span>
-        <p class="ev">Wrongly declining a lead loses a ₹8–14 L project. Wrongly forwarding one costs a designer about 20 minutes. The two errors are not symmetric.</p>
-        <p class="so"><b>So:</b> the system declines only on a <i>clear</i> failure. Unclear timeline, budget or decision-maker goes forward with a note, and unclear scope or location gets one question (<code>qualified.md</code>: "do not push"). Every decline is logged on the dashboard for review.</p>
-      </div>
-      <div class="check">
-        <span class="n">07</span><h3>Where must a human stay?</h3><span class="pill cond">Pass, with a rule</span>
-        <p class="ev">T09 is an existing client whose designer hasn't replied in five days and who wants Nikhil. An agent cannot fix that. Design advice and the price conversation also belong to the designer.</p>
-        <p class="so"><b>So:</b> complaints are flagged ESCALATE and emailed to Nikhil, and the caller is promised a senior call-back within 15 minutes. The agent qualifies and books, and people do the rest.</p>
-      </div>
-      <div class="check">
-        <span class="n">08</span><h3>Could it say something it must not?</h3><span class="pill stop">Stops a feature</span>
-        <p class="ev"><code>pricing.md</code>: <em>"No number from this guide should be quoted to a client."</em> The guide is marked indicative only, and the spread is large: T13's desk says a premium kitchen can cost three times a standard one.</p>
-        <p class="so"><b>So:</b> the per-sq-ft quote is cut (see below). Pricing numbers are kept out of the agent's prompt, and a post-call guardrail flags any ₹ figure the agent says.</p>
-      </div>
-      <div class="check">
-        <span class="n">09</span><h3>Is it worth running, and can we see the cost?</h3><span class="pill pass">Pass</span>
-        <p class="ev">On free tiers it costs $0.00. At paid list rates it would be about $0.43 per qualified lead (assuming $0.05/min for voice plus Gemini tokens), against a ₹8–14 L project. Nikhil asked to see the tool's own cost, so every call writes a cost row and the dashboard shows billed and paid-rate cost side by side.</p>
+    </div>
+
+    <div class="group">
+      <div class="ghead"><h3>Boundary</h3><span>Any No means put a human exactly here.</span></div>
+      <div class="checks">
+        <div class="check">
+          <span class="n">06</span><h3>Failure risk OK?</h3><span class="pill cond">Only with a guardrail</span>
+          <p class="ev">The two failures don't cost the same. Wrongly declining a good lead loses a ₹8–14 L project. Wrongly forwarding a weak one costs a designer about 20 minutes. So the system declines only on a clear failure (Nashik, advice only, a 3-week deadline, a ₹1.5 L budget for a flat, a restaurant). Anything unclear goes to a person: unclear timeline, budget or decision-maker reaches the designer with a note, and unclear scope or location goes to the front desk with one question. Every decline is logged on the dashboard where Nikhil can review it.</p>
+        </div>
+        <div class="check">
+          <span class="n">07</span><h3>Judgment protected?</h3><span class="pill stop">No for pricing, so a human holds it</span>
+          <p class="ev">Qualifying a caller follows written rules, so the agent can do it. Pricing can't be reduced to rules. <code>pricing.md</code> says: <em>"Pricing varies by site, materials specification, and project complexity… All pricing is confirmed by the assigned designer at the consultation."</em> T13's front desk adds that a premium kitchen can cost three times a standard one. The gates are written in code, and Gemini only extracts facts, so the rules don't change with how a caller words things. Complaints such as T09 need Nikhil's judgment, so they are escalated to him with a senior call-back within 15 minutes.</p>
+        </div>
+        <div class="check">
+          <span class="n">09</span><h3>Owner clear?</h3><span class="pill pass">Yes</span>
+          <p class="ev">I own the system for Nikhil in the founder's office: the rules file, the agent prompt and the dashboard. Designers own every lead from the moment the email lands, including the consultation and the price. Nikhil owns escalations and reviews the decline reasons. The front desk owns call-backs and one-question follow-ups.</p>
+        </div>
       </div>
     </div>
 
     <div class="cut col">
-      <span class="eyebrow">The Cut · stopped by check 08</span>
-      <h3>The agent will not quote "our standard per-square-foot pricing"</h3>
-      <blockquote>"And the system should be able to quote our standard per-square-foot pricing so people don't have to wait for that." — Nikhil (the brief's prompt says Arjun)</blockquote>
-      <p>Nikhil's own pricing guide forbids it, and the guide's range runs from standard to luxury at about twice the price. Any number spoken on a call would be wrong for most callers, and it would anchor the negotiation before a designer has seen the site. The transcripts also show it isn't needed: T02 and T13 both pushed for a ballpark, were deflected, and booked anyway.</p>
-      <p><b>What we build instead</b> serves the real goal, which is that nobody waits for a price. The agent uses the exact deflection line and books the consultation during the call, where the designer gives a real number. The handoff tells the designer "asked about pricing, come ready to talk numbers."</p>
+      <span class="eyebrow">The Cut</span>
+      <p><b>Check 07 rules out</b> "quote our standard per-square-foot pricing so people don't have to wait for that." Pricing is a designer's call, made after seeing the site and the materials. Nikhil's own guide says no number should be quoted. A rate read out on the phone would be wrong for most callers and would anchor the negotiation before a designer is involved. Check 06 points the same way: one confident wrong quote does more damage than making someone wait a day.</p>
+      <p>The transcripts show the quote isn't what wins the client. T02 and T13 both pushed for a ballpark, were deflected, and booked anyway. So the agent gives Nikhil's exact deflection line and books the consultation during the call, and the designer gives the number there.</p>
+      <blockquote>To Nikhil: "It won't quote your per-square-foot rate. It will make sure nobody waits for one. Every pricing question ends with a consultation booked on the same call."</blockquote>
     </div>
   </section>
 
@@ -250,51 +295,39 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line);
   <section id="components">
     <span class="eyebrow">Deliverable 3</span>
     <h2>Components map</h2>
-    <p class="col">One phone call from ring to handoff. The bottom row follows T01 (Priya, Kothrud) through each stage.</p>
+    <p class="col">One inbound call from ring to handoff. Each row is an actor and each column is a stage, as in the Case 1 answer key. Follow the numbers.</p>
 
-    <div class="cmap" tabindex="0" aria-label="Components map table, scrolls sideways">
-      <table>
-        <thead>
-          <tr>
-            <th class="row" scope="col"></th>
-            <th scope="col">Trigger<small>what starts it</small></th>
-            <th scope="col">Input<small>what comes in</small></th>
-            <th scope="col">Context<small>what it knows</small></th>
-            <th scope="col">Processing<small>rules in code</small></th>
-            <th scope="col">AI<small>where a model works</small></th>
-            <th scope="col">Output<small>what leaves</small></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th class="row" scope="row">What</th>
-            <td>Inbound call to the studio number, any hour. When the call ends, the voice platform posts the transcript to our webhook.</td>
-            <td>Live speech and the caller's number. After the call: transcript, duration and start time, plus any slot booked during the call.</td>
-            <td><code>services.md</code> (scope, localities), <code>qualified.md</code> (five gates), the pricing deflection script, the caller's history (repeat or dropped call), the Cal.com calendar.</td>
-            <td>Five gates: scope, geography, timeline (6+ weeks), volunteered budget, decision-maker. Outcome routing, the pricing-leak check, and logging of cost and time.</td>
-            <td><b>Live:</b> the voice agent converses and asks one question at a time.<br><b>After the call:</b> Gemini Flash extracts 30 facts as strict JSON and makes no decisions.</td>
-            <td>Handoff email to the right inbox, a HubSpot deal, a database row and the dashboard. Declined callers get the polite close on the call.</td>
-          </tr>
-          <tr>
-            <th class="row" scope="row">Tool</th>
-            <td class="tool">Vaani voice agent · post-call webhook</td>
-            <td class="tool">/api/vaani/webhook</td>
-            <td class="tool">lib/rules.ts · Supabase history · Cal.com</td>
-            <td class="tool">lib/gates.ts · lib/call.ts</td>
-            <td class="tool">Vaani (STT·LLM·TTS) · Gemini Flash, Groq fallback</td>
-            <td class="tool">Gmail SMTP · HubSpot · Supabase · Vercel dashboard</td>
-          </tr>
-          <tr>
-            <th class="row" scope="row">T01</th>
-            <td class="ex">Wed 2 Sep, 10:23. Priya calls, referred by Shruti Joshi.</td>
-            <td class="ex">"3BHK in Kothrud, 1,400 sq ft carpet, whole flat, done by March, husband's happy to go ahead."</td>
-            <td class="ex">Kothrud is on the service list. No previous calls from this number.</td>
-            <td class="ex">Scope ✓, area ✓, timeline ✓ (about 6 months), budget not mentioned ✓, decision-maker ✓, so QUALIFIED.</td>
-            <td class="ex">Extracted: name, 3BHK, Dahanukar Colony, full home, "by March", co-owner, referral.</td>
-            <td class="ex">"[Aangan Lead] Priya — 3BHK apartment, Kothrud" reaches the designers' inbox about 9 seconds after she hangs up.</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="lanes-scroll" tabindex="0" aria-label="Components map, scrolls sideways">
+      <div class="lanes" id="lanes">
+        <div class="corner">Actor</div>
+        <div class="colh">Trigger</div><div class="colh">Input</div><div class="colh">Context</div><div class="colh">Processing</div><div class="colh">AI</div><div class="colh">Output</div>
+
+        <div class="rowh" style="grid-row:2">Caller<small>(prospect)</small></div>
+        <div class="rowh" style="grid-row:3">Vaani<small>(voice agent)</small></div>
+        <div class="rowh" style="grid-row:4">Studio files + Cal.com<small>(context)</small></div>
+        <div class="rowh" style="grid-row:5">Gemini API + gate code<small>(triage)</small></div>
+        <div class="rowh" style="grid-row:6">Gmail · HubSpot<small>(handoff)</small></div>
+        <div class="rowh" style="grid-row:7">Designer / Nikhil<small>(human gate)</small></div>
+
+        <div class="lane" style="grid-row:2"></div><div class="lane alt" style="grid-row:3"></div><div class="lane" style="grid-row:4"></div>
+        <div class="lane alt" style="grid-row:5"></div><div class="lane" style="grid-row:6"></div><div class="lane alt" style="grid-row:7"></div>
+
+        <div class="box b-trig" id="b1" style="grid-row:2;grid-column:2"><i>1</i>Calls the studio number, at any hour</div>
+        <div class="box b-in" id="b2" style="grid-row:3;grid-column:3"><i>2</i>Answers in under 5 s. Asks the five questions one at a time and records the transcript</div>
+        <div class="box b-ctx" id="b3" style="grid-row:4;grid-column:4"><i>3</i>Service areas, five gates and the pricing script. Free Cal.com slots. Caller history</div>
+        <div class="box b-ai" id="b4" style="grid-row:3;grid-column:6"><i>4</i>Live on the call: deflects pricing, books a slot or declines politely</div>
+        <div class="box b-proc" id="b5" style="grid-row:5;grid-column:5"><i>5</i>After the call, Gemini extracts the facts as JSON and the code checks the five gates: qualify, decline, escalate, follow up or call back</div>
+        <div class="box b-ai" id="b6" style="grid-row:5;grid-column:6"><i>6</i>Writes a one-line summary in designer language</div>
+        <div class="box b-out" id="b7" style="grid-row:6;grid-column:7"><i>7</i>[Aangan Lead] email plus a HubSpot deal. Complaints go to Nikhil, call-backs to the front desk</div>
+        <div class="box b-human" id="b8" style="grid-row:7;grid-column:7"><i>8</i>Reads the note, runs the consultation and gives the real price</div>
+
+        <svg class="wires" id="wires" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="col stack">
+      <h3>T01 through the map</h3>
+      <p><b>1</b> Priya calls on Wed 2 Sep at 10:23, referred by Shruti Joshi. <b>2</b> "3BHK in Kothrud, 1,400 sq ft carpet, whole flat, done by March, my husband's happy to go ahead." <b>3</b> Kothrud is on the service list, and this is her first call. <b>4</b> The agent offers consultation slots. <b>5</b> Scope, area, timeline (about 6 months), budget (not mentioned) and decision-maker all pass, so she is QUALIFIED. <b>6</b> Summary: "Full-home design and execution, 1,400 sq ft 3BHK, Kothrud, by March." <b>7</b> "[Aangan Lead] Priya — 3BHK apartment, Kothrud" arrives about 9 seconds after she hangs up. <b>8</b> A designer calls back within the hour.</p>
     </div>
 
     <div class="col stack">
@@ -372,3 +405,38 @@ Subject: [Aangan Lead] Priya — 3BHK apartment, Kothrud
 
   <footer class="col">Sources: MESA Case 03 brief; <code>services.md</code>, <code>qualified.md</code>, <code>pricing.md</code>; Aangan September 2026 enquiry transcripts (T01–T20). The paid-rate voice cost of $0.05/min is an assumption, set in the app's config.</footer>
 </div>
+
+<script>
+(function () {
+  var flow = [["b1","b2"],["b2","b3"],["b3","b4"],["b2","b5"],["b3","b5"],["b5","b6"],["b6","b7"],["b7","b8"]];
+  function draw() {
+    var lanes = document.getElementById("lanes"), svg = document.getElementById("wires");
+    if (!lanes || !svg) return;
+    var L = lanes.getBoundingClientRect(), out = "";
+    svg.setAttribute("viewBox", "0 0 " + L.width + " " + L.height);
+    flow.forEach(function (f) {
+      var a = document.getElementById(f[0]).getBoundingClientRect(), b = document.getElementById(f[1]).getBoundingClientRect();
+      var ax, ay, bx, by, d;
+      if (b.left >= a.right - 4) {            // target is to the right: leave right edge, enter left (or top) edge
+        ax = a.right - L.left; ay = a.top + a.height / 2 - L.top;
+        if (Math.abs((b.top + b.height / 2) - (a.top + a.height / 2)) < 8) { bx = b.left - L.left; by = ay; d = "M" + ax + "," + ay + " H" + (bx - 6); }
+        else { bx = b.left + Math.min(28, b.width / 3) - L.left; by = (b.top > a.top ? b.top : b.bottom) - L.top; d = "M" + ax + "," + ay + " H" + bx + " V" + (by + (b.top > a.top ? -6 : 6)); }
+      } else {                                  // same column: straight down
+        ax = a.left + a.width / 2 - L.left; ay = a.bottom - L.top; bx = ax; by = b.top - L.top; d = "M" + ax + "," + ay + " V" + (by - 6);
+      }
+      out += '<path d="' + d + '"/>';
+      var endX = d.indexOf(" V") > -1 && d.lastIndexOf(" V") > d.lastIndexOf(" H") ? bx : bx - 6;
+      if (d.lastIndexOf(" V") > d.lastIndexOf(" H")) {
+        var down = by > ay, y = down ? by : by;
+        out += '<path class="head" d="M' + (bx - 4) + ',' + (down ? by - 7 : by + 7) + ' L' + (bx + 4) + ',' + (down ? by - 7 : by + 7) + ' L' + bx + ',' + by + ' Z"/>';
+      } else {
+        out += '<path class="head" d="M' + (bx - 7) + ',' + (by - 4) + ' L' + (bx - 7) + ',' + (by + 4) + ' L' + bx + ',' + by + ' Z"/>';
+      }
+    });
+    svg.innerHTML = out;
+  }
+  window.addEventListener("resize", draw);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  draw();
+})();
+</script>
