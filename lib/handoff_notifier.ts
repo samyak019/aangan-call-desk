@@ -1,7 +1,8 @@
 // File 3 — handoff dispatcher.
-// Telegram is the primary channel (see README "Why Telegram"); Resend email is the fallback
-// if Telegram is down or not configured, so a qualified lead is never silently dropped.
+// Gmail is the primary channel (see README "Why Gmail"); Telegram is an optional fallback
+// if Gmail is down or not configured, so a qualified lead is never silently dropped.
 
+import nodemailer, { type Transporter } from "nodemailer";
 import type { Classification, Outcome } from "./types";
 
 export interface HandoffContext {
@@ -110,20 +111,51 @@ async function sendTelegram(chatId: string, text: string): Promise<void> {
   if (!res.ok || !j.ok) throw new Error(`Telegram ${res.status}: ${j.description ?? "unknown error"}`);
 }
 
+let gmail: Transporter | null = null;
+
+// Gmail over SMTP with an App Password (free, ~500 recipients/day — far above 200 calls/month).
+// Resend is used instead only if Gmail isn't configured.
 async function sendEmail(to: string, subject: string, text: string): Promise<void> {
+  const recipients = to.split(",").map((s) => s.trim()).filter(Boolean);
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (user && pass) {
+    gmail ??= nodemailer.createTransport({ service: "gmail", auth: { user, pass: pass.replace(/\s+/g, "") } });
+    await gmail.sendMail({
+      from: `"${process.env.GMAIL_FROM_NAME || "Aangan Call Desk"}" <${user}>`,
+      to: recipients,
+      subject,
+      text,
+    });
+    return;
+  }
   const key = process.env.RESEND_API_KEY;
-  if (!key) throw new Error("RESEND_API_KEY not set");
+  if (!key) throw new Error("No email transport: set GMAIL_USER + GMAIL_APP_PASSWORD");
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM || "Aangan Leads <onboarding@resend.dev>",
-      to: to.split(",").map((s) => s.trim()),
-      subject,
-      text,
-    }),
+    body: JSON.stringify({ from: process.env.RESEND_FROM || "Aangan Leads <onboarding@resend.dev>", to: recipients, subject, text }),
   });
   if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 200)}`);
+}
+
+// Subject lines a designer can triage from the inbox list (and Gmail filters can match on).
+export function subjectFor(outcome: Outcome, c: Classification): string {
+  const f = c.facts;
+  const who = f.caller_name ?? "Caller";
+  const what = [f.property_type, f.locality].filter(Boolean).join(", ");
+  switch (outcome) {
+    case "QUALIFIED":
+      return `[Aangan Lead] ${who}${what ? ` — ${what}` : ""}`;
+    case "ESCALATE":
+      return `[Aangan URGENT] Client complaint — ${who}`;
+    case "NEEDS_FOLLOW_UP":
+      return `[Aangan Follow-up] ${who} — one question before handoff`;
+    case "MISSED":
+      return "[Aangan Call-back] Missed / dropped call";
+    default:
+      return `[Aangan] ${outcome.replace(/_/g, " ").toLowerCase()} — ${who}`;
+  }
 }
 
 type Audience = "designers" | "escalation" | "frontdesk";
@@ -156,7 +188,7 @@ const AUDIENCE: Partial<Record<Outcome, Audience>> = {
   NEEDS_FOLLOW_UP: "frontdesk",
   MISSED: "frontdesk",
   EXISTING_CLIENT: "frontdesk",
-  // NOT_QUALIFIED / NOT_AN_ENQUIRY: logged to the dashboard only — nobody's phone buzzes.
+  // NOT_QUALIFIED / NOT_AN_ENQUIRY: logged to the dashboard only — nobody gets an email.
 };
 
 export async function dispatchHandoff(c: Classification, ctx: HandoffContext): Promise<DispatchResult> {
@@ -168,18 +200,18 @@ export async function dispatchHandoff(c: Classification, ctx: HandoffContext): P
   const { chat, email } = route(audience);
   const errors: string[] = [];
 
-  if (chat) {
+  if (email) {
     try {
-      await sendTelegram(chat, text);
-      return { sent: true, channel: "telegram", text };
+      await sendEmail(email, subjectFor(outcome, c), text);
+      return { sent: true, channel: "email", text };
     } catch (e) {
       errors.push(String(e));
     }
   }
-  if (email) {
+  if (chat) {
     try {
-      await sendEmail(email, text.split("\n")[0], text);
-      return { sent: true, channel: "email", text };
+      await sendTelegram(chat, text);
+      return { sent: true, channel: "telegram", text };
     } catch (e) {
       errors.push(String(e));
     }
@@ -191,8 +223,8 @@ export async function dispatchHandoff(c: Classification, ctx: HandoffContext): P
 export async function alertManagement(text: string): Promise<void> {
   const { chat, email } = route("escalation");
   try {
+    if (email) return await sendEmail(email, `[Aangan URGENT] ${text.split("\n")[0].replace(/^\W+/, "")}`, text);
     if (chat) return await sendTelegram(chat, text);
-    if (email) return await sendEmail(email, text.split("\n")[0], text);
   } catch (e) {
     console.error("alertManagement failed", e);
   }

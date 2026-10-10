@@ -1,6 +1,6 @@
 # Aangan Studio — Inbound Call Qualification & Lead Handoff
 
-Every call to the studio is answered within a few seconds, at any hour, by a voice agent. The agent qualifies the caller against Nikhil's five gates and books qualified callers into a consultation. Within seconds of the call ending, the right person gets a complete handoff note on Telegram. Every call, outcome and rupee of running cost lands on a dashboard.
+Every call to the studio is answered within a few seconds, at any hour, by a voice agent. The agent qualifies the caller against Nikhil's five gates and books qualified callers into a consultation. Within seconds of the call ending, the right person gets a complete handoff note by email (Gmail). Every call, outcome and rupee of running cost lands on a dashboard.
 
 ```
 Caller ──► Vaani voice agent (STT → LLM → TTS, free tier)
@@ -56,18 +56,21 @@ Caller ──► Vaani voice agent (STT → LLM → TTS, free tier)
 
 Nikhil asked for the agent to "quote our standard per-square-foot pricing." It doesn't. His own `pricing.md` says *"No number from this guide should be quoted to a client"*, and his front desk already refuses (T02, T13). The guide's own standard-to-luxury spread is about 2×, so any number given on a call is wrong for most callers and anchors the negotiation. The agent uses the deflection script, and three layers enforce it:
 1. The prompt rule (`prompts/vaani_agent_prompt.md`). The pricing numbers are never put in the agent's context.
-2. A post-call guardrail (`detectPricingLeak`) flags any ₹ figure or per-sq-ft rate the agent says that the caller didn't say first, and alerts Nikhil on Telegram.
+2. A post-call guardrail (`detectPricingLeak`) flags any ₹ figure or per-sq-ft rate the agent says that the caller didn't say first, and emails Nikhil an alert.
 3. The dashboard shows a "Calls where the agent said a ₹ figure" counter, with a target of 0.
 
 What Nikhil actually wants is for nobody to wait for the price, and that is met by booking the consultation during the call.
 
-## Why Telegram, not email
+## Why Gmail, not Telegram
 
-- **Speed is the whole point.** Telegram is a push notification on the designer's phone within about 1 s. Email lands in an inbox next to 50 vendor mails. The 4× conversion lift needs a designer to *see* the lead within the hour.
-- **Free, with no setup friction.** The Bot API is free and unlimited for this volume. Resend's free tier only sends to outside addresses after you verify a domain, and needs SPF/DKIM DNS records.
-- **Routing by audience.** There are three chats: designers (qualified leads), Nikhil (complaints and guardrail alerts) and front desk (call-backs and one-question follow-ups). Nobody is pinged for declined calls.
-- **It's still a record.** The full handoff is also saved in `leads.handoff_payload`, so nothing lives only in chat.
-- **Email is a fallback.** If Telegram fails or isn't configured, the same note goes out through Resend.
+- **Designers already live in it.** The studio runs on email: client threads, vendor quotes and site photos. A lead in Gmail sits next to everything else about that client. There's no new app to install and no group chat to babysit.
+- **It's the record.** Each lead is its own thread. The designer replies, forwards it to a colleague, or searches "Kothrud 3BHK" six months later. In a Telegram group, lead #40 is buried under 39 others.
+- **Free, with no domain setup.** Gmail SMTP with an App Password sends about 500 emails a day for free. Aangan gets about 200 calls a month. Unlike Resend, no DNS records or domain verification are needed.
+- **Speed is protected by the subject line.** The weakness of email is that a lead can sit unread. Subjects are prefixed (`[Aangan Lead]`, `[Aangan URGENT]`, `[Aangan Follow-up]`, `[Aangan Call-back]`), so a one-line Gmail filter can mark leads Important and star them. Phone notifications then fire for those emails only. The dashboard tracks call-end → email-sent time against the 5-minute promise.
+- **Routing by audience.** Three recipient lists: designers (qualified leads), Nikhil (complaints and pricing-guardrail alerts) and front desk (call-backs and one-question follow-ups). Nobody gets an email for a declined call.
+- **Fallback.** If Gmail fails, the same note goes to Telegram when that's configured. Every handoff is also saved in `leads.handoff_payload`.
+
+**Trade-off we accepted:** Telegram would buzz a designer's phone about a second faster. But the 4× conversion gain is measured against *the next day*, not the next minute. An Important-flagged email seen within the hour captures that gain, and it keeps the lead in the tool where the project will actually be run.
 
 ## Cost: $0.00, tracked per call
 
@@ -79,17 +82,17 @@ Each call gets a `system_costs` row with tokens, voice minutes and **billed** co
 | LLM | Gemini Flash (Groq fallback) | AI Studio free tier |
 | DB | Supabase | 500 MB Postgres |
 | Calendar | Cal.com | Individual plan |
-| Handoff | Telegram Bot API (Resend fallback) | Free / 3,000 emails per month |
+| Handoff | Gmail SMTP + App Password (Telegram fallback) | Free, ~500 emails/day |
 | CRM | HubSpot | Free CRM, forever |
 | Hosting | Vercel Hobby | Free |
 
 ## Setup
 
 1. **Database.** Create a Supabase project, then run `db/schema.sql` in the SQL editor. Copy the URL and the *service-role* key.
-2. **Telegram.** Message @BotFather, send `/newbot`, and copy the token. Add the bot to three groups (designers, Nikhil, front desk). To get each chat id, send a message in the group and open `https://api.telegram.org/bot<TOKEN>/getUpdates`.
+2. **Gmail.** Use a dedicated account, such as `aangan.calldesk@gmail.com`. Turn on 2-Step Verification, then create an App Password at myaccount.google.com/apppasswords. Put the address, password and the three recipient lists in the env vars. Check it with `npm run email:test -- you@example.com`. Then, in each designer's Gmail, create a filter: `subject:[Aangan` → *Always mark as important* + *Star it*.
 3. **Gemini.** Get a free key at aistudio.google.com.
 4. **Cal.com.** Create a "Design consultation" event type. Copy its id and an API key (Settings → Developer).
-5. **HubSpot.** Settings → Integrations → Private apps. Create one with contacts and deals write scopes and copy the token. Each qualified call becomes a contact plus a deal: "Qualified to buy", or "Appointment scheduled" if it was booked on the call. A HubSpot failure is logged but never blocks the Telegram handoff.
+5. **HubSpot.** Settings → Integrations → Private apps. Create one with contacts and deals write scopes and copy the token. Each qualified call becomes a contact plus a deal: "Qualified to buy", or "Appointment scheduled" if it was booked on the call. A HubSpot failure is logged but never blocks the email handoff.
 6. Copy `.env.example` to `.env.local` and fill it in. Then run:
    ```bash
    npm install && npm test && npm run eval
@@ -101,7 +104,7 @@ Each call gets a `system_costs` row with tokens, voice minutes and **billed** co
    - If the platform supports custom HTTP tools, add `check_availability` and `book_consultation` pointing at `/api/tools/...` with the same secret.
    - Attach the studio number, or forward to it.
    - The webhook accepts the common payload shapes (`transcript` as a string or as a list of `{role, content}`, plus `call_id`, `from`, `duration`, `started_at`). If Vaani names fields differently, map them in `normaliseWebhook` in `lib/call.ts`.
-9. **Smoke test.** Run `npm run seed -- --quiet` to replay September into the live database and watch the dashboard fill. Drop `--quiet` to also fire the Telegram handoffs.
+9. **Smoke test.** Run `npm run seed -- --quiet` to replay September into the live database and watch the dashboard fill. Drop `--quiet` to also send the handoff emails.
 
 `GET /api/health` reports which integrations are configured, without exposing any values.
 
@@ -115,7 +118,7 @@ Only the input changes. A WhatsApp Business webhook or a form POST becomes a `Ca
 |---|---|
 | `db/schema.sql` | **File 1**: calls, leads, system_costs, tool_bookings |
 | `lib/classifier.ts` | **File 2**: Gemini/Groq structured extraction, returns facts and a decision |
-| `lib/handoff_notifier.ts` | **File 3**: handoff formatting, Telegram, Resend fallback |
+| `lib/handoff_notifier.ts` | **File 3**: handoff formatting, Gmail (primary), Telegram fallback |
 | `lib/hubspot.ts` | Qualified call → HubSpot contact and deal |
 | `lib/gates.ts`, `lib/rules.ts` | Decision boundary and studio rules |
 | `prompts/vaani_agent_prompt.md` | Voice agent system prompt |
