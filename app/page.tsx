@@ -45,7 +45,7 @@ export default async function Dashboard() {
   let demo = false;
   let err: string | null = null;
   try {
-    ({ rows, demo } = await loadRows(30));
+    ({ rows, demo } = await loadRows(90));
   } catch (e) {
     err = String(e);
   }
@@ -66,7 +66,7 @@ export default async function Dashboard() {
       <header>
         <div>
           <h1>Aangan Studio · Call Desk</h1>
-          <p className="sub">Last 30 days · every inbound call, answered 24/7 by the voice agent</p>
+          <p className="sub">Last 90 days · every inbound call, answered 24/7 by the voice agent</p>
         </div>
         {demo && <span className="badge">Demo data · September 2026 transcripts — connect Supabase for live numbers</span>}
       </header>
