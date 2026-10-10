@@ -1,7 +1,7 @@
 // Offline tests of the decision boundary — no API keys needed.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { detectPricingLeak } from "../lib/call";
+import { detectPricingLeak, normaliseWebhook } from "../lib/call";
 import { coerce } from "../lib/classifier";
 import { decide } from "../lib/gates";
 import type { ExtractedCall } from "../lib/types";
@@ -121,4 +121,16 @@ test("Pricing guardrail: words ending in 'rs' are not rupees (T02 false alarm)",
   );
   assert.ok(detectPricingLeak([{ speaker: "agent", text: "It's about Rs. 1,800 per sq ft." }]));
   assert.ok(detectPricingLeak([{ speaker: "agent", text: "Usually around ₹12 lakh." }]));
+});
+
+test("Vaani transcript format: timestamps stripped, AGENT/USER mapped, duration and phone found", () => {
+  const c = normaliseWebhook({
+    call_id: "outbound-1",
+    data: { customer: { phone_number: "+91 98765 43210" } },
+    transcript: "[13:04:30] AGENT: Good evening, Aangan Studio.\n[13:04:35] USER: I need a three BHK flat done.\n[13:06:10] AGENT: When would you need it complete?",
+  });
+  assert.deepEqual(c.turns.map((t) => t.speaker), ["agent", "caller", "agent"]);
+  assert.equal(c.turns[1].text, "I need a three BHK flat done.");
+  assert.equal(c.callerPhone, "+91 98765 43210");
+  assert.equal(c.durationSeconds, 100);
 });

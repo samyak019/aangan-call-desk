@@ -15,6 +15,8 @@ const pick = (o: Json, keys: string[]) => {
 
 const AGENT_ROLES = ["agent", "assistant", "bot", "ai", "studio", "front desk"];
 
+const TS_PREFIX = /^\s*\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]\s*/; // Vaani: "[13:04:30] AGENT: ..."
+
 function toTurns(t: unknown): Turn[] {
   if (Array.isArray(t)) {
     return t
@@ -26,30 +28,66 @@ function toTurns(t: unknown): Turn[] {
       .filter((m) => m.text);
   }
   if (typeof t === "string") {
-    // "Agent: ...\nUser: ..." style plain transcripts
-    return t
-      .split(/\n+/)
-      .map((line) => {
-        const m = line.match(/^\s*([A-Za-z ]{2,20}):\s*(.*)$/);
-        if (!m) return { speaker: "caller", text: line.trim() } as Turn;
-        return { speaker: AGENT_ROLES.includes(m[1].trim().toLowerCase()) ? "agent" : "caller", text: m[2].trim() } as Turn;
-      })
-      .filter((x) => x.text);
+    // "Agent: ..." / "[13:04:30] AGENT: ..." lines; unlabelled lines continue the previous turn.
+    const turns: Turn[] = [];
+    for (const raw of t.split(/\n+/)) {
+      const line = raw.replace(TS_PREFIX, "").trim();
+      if (!line) continue;
+      const m = line.match(/^([A-Za-z ]{2,20}):\s*(.*)$/);
+      if (m) {
+        turns.push({ speaker: AGENT_ROLES.includes(m[1].trim().toLowerCase()) ? "agent" : "caller", text: m[2].trim() });
+      } else if (turns.length) {
+        turns[turns.length - 1].text += ` ${line}`;
+      } else {
+        turns.push({ speaker: "caller", text: line });
+      }
+    }
+    return turns.filter((x) => x.text);
   }
   return [];
+}
+
+// Depth-first search for the first value whose key matches — Vaani nests call details.
+function findDeep(o: unknown, keyRe: RegExp, ok: (v: unknown) => boolean, depth = 0): unknown {
+  if (!o || typeof o !== "object" || depth > 5) return null;
+  for (const [k, v] of Object.entries(o as Json)) if (keyRe.test(k) && ok(v)) return v;
+  for (const v of Object.values(o as Json)) {
+    const hit = findDeep(v, keyRe, ok, depth + 1);
+    if (hit != null) return hit;
+  }
+  return null;
+}
+
+const looksLikePhone = (v: unknown) => typeof v === "string" && v.replace(/\D/g, "").length >= 10 && v.replace(/\D/g, "").length <= 15;
+const positiveNumber = (v: unknown) => Number(v) > 0 && Number.isFinite(Number(v));
+
+function keyList(o: unknown, prefix = "", depth = 0): string[] {
+  if (!o || typeof o !== "object" || Array.isArray(o) || depth > 3) return [];
+  return Object.entries(o as Json).flatMap(([k, v]) => [prefix + k, ...keyList(v, `${prefix}${k}.`, depth + 1)]);
+}
+
+function durationFromTranscript(t: unknown): number {
+  if (typeof t !== "string") return 0;
+  const stamps = [...t.matchAll(/\[(\d{1,2}):(\d{2})(?::(\d{2}))?\]/g)].map((m) => +m[1] * 3600 + +m[2] * 60 + +(m[3] ?? 0));
+  return stamps.length > 1 ? Math.max(0, stamps[stamps.length - 1] - stamps[0]) : 0;
 }
 
 // Vaani's exact post-call payload isn't something we control; accept the common shapes
 // and map field names here (one place to adjust if the platform renames anything).
 export function normaliseWebhook(body: Json): CallInput {
+  console.log("webhook payload keys:", keyList(body).slice(0, 80).join(", ")); // keys only, never values
   const startedRaw = pick(body, ["started_at", "start_time", "call.started_at", "created_at", "timestamp"]);
   const startedAt = startedRaw ? new Date(typeof startedRaw === "number" && startedRaw < 1e12 ? startedRaw * 1000 : startedRaw) : new Date();
-  const transcript = pick(body, ["transcript", "messages", "conversation", "call.transcript", "data.transcript"]);
+  const transcript = pick(body, ["transcript", "messages", "conversation", "call.transcript", "data.transcript"]) ?? findDeep(body, /transcript|conversation/i, (v) => typeof v === "string" || Array.isArray(v));
+  const phone =
+    pick(body, ["from", "caller_number", "caller_phone", "phone_number", "customer.number", "call.from"]) ??
+    findDeep(body, /(phone|number|mobile|msisdn|^to$|^from$|recipient|customer|contact)/i, looksLikePhone);
+  const declared = Number(pick(body, ["duration_seconds", "duration", "call.duration", "call_duration"]) ?? findDeep(body, /duration/i, positiveNumber) ?? 0);
   return {
     externalCallId: String(pick(body, ["call_id", "id", "call.id", "session_id", "data.call_id"]) ?? `anon-${startedAt.getTime()}`),
-    callerPhone: pick(body, ["from", "caller_number", "caller_phone", "phone_number", "customer.number", "call.from"]),
+    callerPhone: (phone as string | null) ?? null,
     startedAt: isNaN(startedAt.getTime()) ? new Date() : startedAt,
-    durationSeconds: Math.round(Number(pick(body, ["duration_seconds", "duration", "call.duration", "call_duration"]) ?? 0)),
+    durationSeconds: Math.round(declared > 0 ? (declared > 36000 ? declared / 1000 : declared) : durationFromTranscript(transcript)),
     turns: toTurns(transcript),
     bookedSlot: pick(body, ["booked_slot", "metadata.booked_slot", "variables.booked_slot"]),
   };
