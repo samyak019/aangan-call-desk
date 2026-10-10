@@ -216,7 +216,7 @@ code { font: 12.5px var(--mono); }
 (function () {
   var flow = [
     ["b1","b2a"],["b1","b2b"],["b2a","b4a"],["b2b","b4b"],["b3","b4a"],["b3","b4b"],
-    ["b4a","b5a"],["b4b","b5b"],["b5a","b6"],["b5b","b6"],["b6c","b6"],["b6","b7"],["b7","b8"],
+    ["b4a","b5a"],["b4b","b5b"],["b5a","b6","rail"],["b5b","b6"],["b6c","b6"],["b6","b7"],["b7","b8"],
     ["b8","b9s"],["b8","b9g","side"],["b9g","b10"]
   ];
   function edge(r, L) { return { l: r.left - L.left, r: r.right - L.left, t: r.top - L.top, b: r.bottom - L.top, cx: r.left + r.width / 2 - L.left, cy: r.top + r.height / 2 - L.top }; }
@@ -238,8 +238,11 @@ code { font: 12.5px var(--mono); }
       var a = edge(A.getBoundingClientRect(), L), b = edge(B.getBoundingClientRect(), L), d, head;
       var sameRow = a.b > b.t && b.b > a.t;
       if (f[2] === "side") {
-        var sx = b.r + 14;
-        d = "M" + a.r + "," + a.cy + " H" + sx + " V" + b.cy + " H" + (b.r + 6); head = arrowHead(b.r, b.cy, "left");
+        var lx = b.l - 16; // run down the gap just left of the target column
+        d = "M" + a.r + "," + a.cy + " H" + lx + " V" + b.cy + " H" + (b.l - 6); head = arrowHead(b.l, b.cy, "right");
+      } else if (f[2] === "rail") {
+        var rx = Math.max(a.r, b.r) + 12; // run down the gap right of the column, clear of boxes below
+        d = "M" + a.r + "," + a.cy + " H" + rx + " V" + (b.t - 12) + " H" + b.cx + " V" + (b.t - 6); head = arrowHead(b.cx, b.t, "down");
       } else if (sameRow) {
         if (b.l - a.r > 60) { var top = Math.min(a.t, b.t) - 10; d = "M" + a.cx + "," + a.t + " V" + top + " H" + b.cx + " V" + (b.t - 6); head = arrowHead(b.cx, b.t, "down"); }
         else if (b.l >= a.r) { d = "M" + a.r + "," + a.cy + " H" + (b.l - 6); head = arrowHead(b.l, a.cy, "right"); }
